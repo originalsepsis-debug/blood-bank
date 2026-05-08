@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.6.4"
+APP_TITLE = "Банк крові V5.6.5"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -646,7 +646,8 @@ def health_payload():
             dt=datetime.strptime(b["created_at"], "%Y-%m-%d %H:%M:%S")
             age=round((datetime.now()-dt).total_seconds()/3600,2)
     except Exception: pass
-    return {"ok":ok,"version":"V5.6.3","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,"time":now()}
+    return {"ok":ok,"version":"V5.6.3","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
+        "admin_count": len(rows("SELECT id FROM users WHERE role=\'admin\' AND active=1")),"time":now()}
 
 
 def ensure_default_admin():
@@ -727,6 +728,11 @@ def role_required(*roles):
 
 @app.route("/")
 def index():
+    # V565_INDEX_ADMIN_BOOTSTRAP
+    try:
+        ensure_default_admin()
+    except Exception:
+        pass
     if "csrf" not in session: session["csrf"] = secrets.token_hex(24)
     session["last_seen"] = time.time()
     u = current_user()
@@ -736,6 +742,11 @@ def index():
 
 @app.post("/login")
 def login():
+    # V565_LOGIN_ADMIN_BOOTSTRAP
+    try:
+        ensure_default_admin()
+    except Exception as e:
+        print("ADMIN_BOOTSTRAP_LOGIN_ERROR:", e)
     username = request.form.get("username","").strip()
     password = request.form.get("password","")
     ip = request.headers.get("X-Forwarded-For", request.remote_addr or "")
@@ -1381,7 +1392,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.6.4")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.6.5")
 
 
 @app.get("/api/telegram/status")
@@ -1485,6 +1496,15 @@ def api_maintenance_run():
 @app.post("/api/admin/bootstrap")
 def api_admin_bootstrap():
     token = request.headers.get("X-API-Token","")
+    if not API_TOKEN or token != API_TOKEN:
+        return jsonify(ok=False,error="API token invalid"), 403
+    created = ensure_default_admin()
+    return jsonify(ok=True, created=created, login="Sepsis", password="1986")
+
+
+@app.route("/api/admin/bootstrap-browser", methods=["GET","POST"])
+def api_admin_bootstrap_browser():
+    token = request.headers.get("X-API-Token","") or request.args.get("token","")
     if not API_TOKEN or token != API_TOKEN:
         return jsonify(ok=False,error="API token invalid"), 403
     created = ensure_default_admin()
