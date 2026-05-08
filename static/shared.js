@@ -1,0 +1,371 @@
+
+const ROLE=APP.role, CSRF=APP.csrf;
+const FIELD_LABELS_UA={
+  patient_name:'ПІБ пацієнта',
+  birth_date:'Дата народження',
+  department:'Відділення',
+  component:'Компонент крові',
+  patient_group:'Група крові',
+  patient_rh:'Резус',
+  amount:'Кількість',
+  diagnosis:'Діагноз',
+  stock_component:'Компонент',
+  stock_group:'Група крові',
+  stock_rh:'Резус',
+  qr_code:'QR/Barcode'
+};
+function fieldNameUa(id){return FIELD_LABELS_UA[id]||id}
+function toast(msg,type='warn'){
+  let t=document.getElementById('toastBox');
+  if(!t){t=document.createElement('div');t.id='toastBox';document.body.appendChild(t);}
+  t.className='toast '+type;
+  t.textContent=msg;
+  t.onclick=()=>t.remove();
+  setTimeout(()=>{if(t)t.remove()},4500);
+}
+function requireFields(ids){
+  for(const id of ids){
+    const el=document.getElementById(id);
+    if(!el)continue;
+    if(String(el.value||'').trim()===''){
+      toast('⚠️ Заповніть поле: '+fieldNameUa(id),'warn');
+      try{el.focus()}catch(e){}
+      return false;
+    }
+  }
+  return true;
+}
+
+if(localStorage.getItem('theme')==='dark'){document.body.classList.add('dark')}
+window.REQUEST_TAB='active';
+const headers={'Content-Type':'application/json','X-CSRF-Token':CSRF};
+window.addEventListener('error',e=>{let d=document.createElement('div');d.className='danger';d.style.position='fixed';d.style.left='10px';d.style.right='10px';d.style.bottom='10px';d.style.zIndex=9999;d.textContent='Помилка інтерфейсу: '+e.message;document.body.appendChild(d);});
+function show(id){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id)?.classList.add('active');loadAll();}
+function setRequestTab(tab,btn){window.REQUEST_TAB=tab;document.querySelectorAll('.req-tab').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');loadRequestsLive();}
+function compKind(c){c=(c||'').toLowerCase();if(c.includes('кріо')||c.includes('cryo'))return'cryo';if(c.includes('плаз'))return'plasma';if(c.includes('тромб'))return'plt';return'rbc'}
+async function jget(u){return await (await fetch(u)).json()}
+async function jpost(u,d){
+  const payload={u,d,ts:Date.now()};
+  if(!navigator.onLine){
+    let q=JSON.parse(localStorage.getItem('offlineQueue')||'[]');
+    q.push(payload);
+    localStorage.setItem('offlineQueue',JSON.stringify(q));
+    showOfflineStatus('Offline: дія збережена локально і буде відправлена після відновлення інтернету');
+    return {ok:true, queued:true};
+  }
+  try{
+    const resp=await fetch(u,{method:'POST',headers,body:JSON.stringify(d)});
+    const text=await resp.text();
+    let data=null;
+    try{data=JSON.parse(text)}catch(e){data={ok:false,error:text||('HTTP '+resp.status)}}
+    if(!resp.ok){
+      toast(data.error||('Помилка сервера: '+resp.status),'warn');
+      return data;
+    }
+    return data;
+  }catch(e){
+    let q=JSON.parse(localStorage.getItem('offlineQueue')||'[]');
+    q.push(payload);
+    localStorage.setItem('offlineQueue',JSON.stringify(q));
+    showOfflineStatus('Помилка мережі: дія збережена локально');
+    return {ok:true, queued:true};
+  }
+}
+function val(id){return document.getElementById(id)?.value||''}
+async function loadAll(){await Promise.allSettled([loadStock(),loadRequestsLive(),loadReminders(),loadUsersPanel(),loadAudit(),loadAlerts(),loadTrash(),loadBackups(),loadHome(),loadTransfusionJournal(),loadReactionRegistry(),loadTransfusionEvents(),loadTelegramStatus()]);}
+async function loadStock(){let st=await jget('/api/stock');let r=0,p=0,t=0,cr=0,low=0,h='<table><tr><th>Компонент</th><th>Група</th><th>К-сть</th></tr>';st.forEach(x=>{let q=Number(x.qty||0);if(compKind(x.component)=='rbc')r+=q;if(compKind(x.component)=='plasma')p+=q;if(compKind(x.component)=='plt')t+=q;if(compKind(x.component)=='cryo')cr+=q;if(q<5)low++;h+=`<tr><td>${x.component}</td><td>${x.group||''}${x.rh||''}</td><td>${q}</td></tr>`});rbcStat.textContent=r;plasmaStat.textContent=p;pltStat.textContent=t;if(window.cryoStat)cryoStat.textContent=cr;lowStat.textContent=low;if(stock)stock.innerHTML=h+'</table>'}
+async function saveStock(){let d={type:val('stock_type'),component:val('stock_component'),donor_group:val('stock_group'),donor_rh:val('stock_rh'),amount:val('stock_amount'),pack_no:val('pack_no'),series:val('series'),expiry:val('expiry'),qr_code:val('qr_code')};let j=await jpost('/api/stock/add',d);alert(j.ok?'Збережено':j.error);loadAll();}
+async function loadRequestsLive(){
+  let box=document.getElementById('requests');
+  if(!box)return;
+  let data=await jget('/api/requests');
+  if(!Array.isArray(data)){box.innerHTML='<div class="danger">Не вдалося завантажити вимоги</div>';return;}
+  let tab=window.REQUEST_TAB||'active';
+  let filtered=data.filter(x=>{
+    let st=(x.status||'').toLowerCase();
+    if(tab==='used') return st.includes('використ');
+    if(tab==='written') return st.includes('спис');
+    if(tab==='rejected') return st.includes('відмов');
+    return !(st.includes('використ')||st.includes('спис')||st.includes('відмов'));
+  });
+  let titleMap={active:'Активні вимоги',used:'Використані вимоги',written:'Списані вимоги',rejected:'Відмовлені вимоги'};
+  let h=`<div class="notice"><b>${titleMap[tab]}</b>: ${filtered.length}</div>`;
+  filtered.forEach(x=>{
+    h+=`<div class="req-card ${x.status=='Нова'?'live-new':''}">
+      <div class="req-top">
+        <div>
+          <div class="patient">№${x.id} ${x.patient_name||''}</div>
+          <div class="meta">${x.department||''} · ${x.patient_group||''}${x.patient_rh||''}</div>
+        </div>
+        <span class="status">${x.status||''}</span>
+      </div>
+      <p>${x.component||''} <b>${x.amount||''}</b> · ${x.urgency||''}</p>
+      ${x.compatibility_warning?`<div class="danger">${x.compatibility_warning}</div>`:''}
+      <div class="meta">Використано: ${x.used_at||'-'} · Списано: ${x.writeoff_at||'-'} · Реакція: ${x.reaction_present||'Ні'}</div>
+      <div>${actions(x, tab)}</div>
+    </div>`;
+  });
+  box.innerHTML=h;
+}
+function actions(x, tab='active'){
+  let h='';
+  let archived = ['used','written','rejected'].includes(tab);
+  if(!archived && ['admin','transfusion'].includes(ROLE)){
+    h+=`<button class="btn-blue" onclick="reqAction(${x.id},'approve')">Погодити</button><button class="btn-orange" onclick="reqAction(${x.id},'issue')">Видати</button><button class="btn-red" onclick="reqAction(${x.id},'reject')">Відмовити</button>`;
+  }
+  if(!archived){
+    h+=`<button class="btn-green" onclick="openUsedModal(${x.id})">Використано</button><button class="btn-red" onclick="openWriteoffModal(${x.id})">Списати</button><button class="btn-orange" onclick="markReaction(${x.id})">Реакція</button>`;
+  }
+  h+=`<button onclick="location.href='/reports/request/${x.id}.pdf'">PDF</button>`;
+  return h
+}
+async function createRequest(){
+  if(!requireFields(['patient_name','birth_date','department','component','patient_group','patient_rh','amount','diagnosis']))return;let d={patient_name:val('patient_name'),birth_date:val('birth_date'),address:val('address'),patient_status:val('patient_status'),department:val('department'),component:val('component'),patient_group:val('patient_group'),patient_rh:val('patient_rh'),amount:val('amount'),urgency:val('urgency'),diagnosis:val('diagnosis'),note:val('note')};let j=await jpost('/api/request/create',d);toast(j.ok?'✅ Вимогу створено':(j.error||'Помилка'),'good');;loadAll();}
+async function reqAction(id,action){let d={id,action};if(action=='issue'){d.donor_group=prompt('Група донора','');d.donor_rh=prompt('Rh','');d.pack_no=prompt('№ пакета','');d.series=prompt('Серія','');d.expiry=prompt('Термін','');d.override=confirm('Дозволити видачу при попередженні несумісності?')}let j=await jpost('/api/request/action',d);alert(j.ok?'Готово':j.error);loadAll();}
+function openUsedModal(id){let use_date=prompt('Дата/час використання',new Date().toISOString().slice(0,16));let used_by=prompt('Хто підтвердив','');let use_confirm=prompt('Підтвердження','перелито');if(!use_date||!used_by||!use_confirm)return;jpost('/api/request/used',{id,use_date,used_by,use_confirm}).then(j=>{alert(j.ok?'Збережено':j.error);loadAll();});}
+function openWriteoffModal(id){let writeoff_date=prompt('Дата/час списання',new Date().toISOString().slice(0,16));let written_by=prompt('Хто списав','');let writeoff_reason=prompt('Причина','');if(!writeoff_date||!written_by||!writeoff_reason)return;jpost('/api/request/writeoff',{id,writeoff_date,written_by,writeoff_reason}).then(j=>{alert(j.ok?'Списано':j.error);loadAll();});}
+function markReaction(id){let reaction_type=prompt('Тип реакції','');if(reaction_type===null)return;jpost('/api/request/reaction',{id,reaction_present:'Так',reaction_type,reaction_severity:prompt('Тяжкість',''),reaction_description:prompt('Опис',''),reaction_result:prompt('Наслідок','')}).then(j=>{alert(j.ok?'Збережено':j.error);loadAll();});}
+async function loadReminders(){let box=document.getElementById('reminders');if(!box)return;let data=await jget('/api/doctor/reminders');if(!Array.isArray(data)||!data.length){box.innerHTML='';return}box.innerHTML='<div class="danger"><b>Незавершені видані вимоги: '+data.length+'</b></div>'}
+async function loadUsersPanel(){let box=document.getElementById('users');if(!box||!['admin','transfusion'].includes(ROLE))return;let data=await jget('/api/users');window.USERS=data;renderUsersTable();}
+function renderUsersTable(){let box=document.getElementById('users');if(!box||!window.USERS)return;let q=(document.getElementById('usersSearch')?.value||'').toLowerCase();let h='<div class="table-scroll"><table class="users-table"><tr><th>ID</th><th>Логін</th><th>ПІБ</th><th>Посада</th><th>Роль</th><th>Дії</th></tr>';window.USERS.filter(x=>JSON.stringify(x).toLowerCase().includes(q)).forEach(x=>{h+=`<tr><td>${x.id}</td><td><input id="ulogin_${x.id}" value="${x.username||''}"></td><td><input id="ufn_${x.id}" value="${x.full_name||''}"></td><td><input id="upos_${x.id}" value="${x.position||''}"></td><td><select id="urole_${x.id}"><option ${x.role=='doctor'?'selected':''}>doctor</option><option ${x.role=='nurse'?'selected':''}>nurse</option><option ${x.role=='transfusion'?'selected':''}>transfusion</option><option ${x.role=='admin'?'selected':''}>admin</option></select></td><td class="actions-cell"><button onclick="saveUser(${x.id})">Зберегти</button><button onclick="changeUserPassword(${x.id})">Пароль</button><button class="btn-red small-btn" onclick="deleteUser(${x.id},'${x.username||''}')">Видалити</button></td></tr>`});box.innerHTML=h+'</table></div>'}
+async function createUser(){let j=await jpost('/api/users/create',{username:val('new_username'),password:val('new_password'),full_name:val('new_full_name'),position:val('new_position'),role:val('new_role')});alert(j.ok?'Створено':j.error);loadAll();}
+async function saveUser(id){let j=await jpost('/api/users/update',{id,username:val('ulogin_'+id),full_name:val('ufn_'+id),position:val('upos_'+id),role:val('urole_'+id)});alert(j.ok?'Збережено':j.error);loadAll();}
+async function changeUserPassword(id){let p=prompt('Новий пароль');if(!p)return;let j=await jpost('/api/users/update',{id,password:p});alert(j.ok?'Пароль змінено':j.error);} async function deleteUser(id,username){if(!confirm('Видалити користувача '+username+' у кошик?'))return;let reason=prompt('Причина видалення','');let j=await jpost('/api/admin/delete-record',{table:'users',id,reason});alert(j.ok?'Користувача переміщено в кошик':j.error);loadAll();}
+async function loadAudit(){let box=document.getElementById('audit');if(!box||!['admin','transfusion'].includes(ROLE))return;let data=await jget('/api/audit');box.innerHTML='<table><tr><th>Дата</th><th>Користувач</th><th>Дія</th><th>Деталі</th></tr>'+data.map(x=>`<tr><td>${x.created_at}</td><td>${x.username}</td><td>${x.action}</td><td>${x.details}</td></tr>`).join('')+'</table>'}
+async function loadAlerts(){let box=document.getElementById('alerts');if(!box)return;let a=await jget('/api/alerts');box.innerHTML=a.low&&a.low.length?'<div class="danger">'+a.low.map(x=>`${x.component} ${x.group||''}${x.rh||''}: ${x.qty}`).join('<br>')+'</div>':'<div class="good">Критичних попереджень немає</div>'}
+async function loadReport(){let d=await jget('/api/reports/preview');reportPreview.innerHTML='<table><tr><th>ID</th><th>Дата</th><th>Пацієнт</th><th>Компонент</th><th>Статус</th></tr>'+d.rows.map(x=>`<tr><td>${x.id}</td><td>${x.created_at}</td><td>${x.patient_name}</td><td>${x.component}</td><td>${x.status}</td></tr>`).join('')+'</table>'}
+
+async function loadTrash(){
+  let box=document.getElementById('trash');
+  if(!box||ROLE!='admin')return;
+  let d=await jget('/api/trash');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>ID</th><th>Дата</th><th>Таблиця</th><th>Запис</th><th>Хто</th><th>Дія</th></tr>'+
+    d.map(x=>`<tr><td>${x.id}</td><td>${x.created_at}</td><td>${x.source_table}</td><td>${x.source_id}</td><td>${x.deleted_by||''}</td><td><button class="btn-green" onclick="restoreTrash(${x.id})">Відновити</button></td></tr>`).join('')+
+    '</table></div>';
+}
+async function restoreTrash(id){
+  if(!confirm('Відновити запис з кошика?'))return;
+  let j=await jpost('/api/trash/restore',{id});
+  alert(j.ok?'Відновлено':j.error);
+  loadAll();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{loadAll();setInterval(loadAll,5000);});
+
+async function loadHome(){
+  let box=document.getElementById('dashboard');
+  if(!box)return;
+  let d=await jget('/api/dashboard');
+  const max=Math.max(1,...(d.daily||[]).map(x=>Number(x.count||0)));
+  const bars=(d.daily||[]).slice().reverse().map(x=>`<div class="chart-bar" style="height:${30+100*Number(x.count||0)/max}px" title="${x.day}">${x.count}</div>`).join('');
+  box.innerHTML='<div class="dashboard-grid">'+
+    '<div class="dashboard-box"><b>Статуси</b><br>'+d.requests.map(x=>`${x.status}: ${x.count}`).join('<br>')+'</div>'+
+    '<div class="dashboard-box"><b>Компоненти</b><br>'+d.components.map(x=>`${x.component}: ${x.amount}`).join('<br>')+'</div>'+
+    '<div class="dashboard-box"><b>Відділення</b><br>'+d.departments.map(x=>`${x.department||'-'}: ${x.count}`).join('<br>')+'</div>'+
+    '<div class="dashboard-box"><b>Реакції</b><br>'+((d.reactions||[]).map(x=>`${x.reaction_type||'Невказано'}: ${x.count}`).join('<br>')||'Немає')+'</div>'+
+    '</div><h3>Динаміка вимог</h3><div class="chart-row">'+bars+'</div><button class="btn-blue" onclick="testNotification()">Тест push</button>';
+}
+async function loadPatientHistory(){let name=val('patientSearch');let d=await jget('/api/patients/history?name='+encodeURIComponent(name));patientHistory.innerHTML='<div class="table-scroll"><table><tr><th>ID</th><th>Дата</th><th>Компонент</th><th>Статус</th><th>Реакція</th></tr>'+d.rows.map(x=>`<tr><td>${x.id}</td><td>${x.created_at}</td><td>${x.component}</td><td>${x.status}</td><td>${x.reaction_present}</td></tr>`).join('')+'</table></div>'}
+async function loadBackups(){let box=document.getElementById('backups');if(!box||ROLE!='admin')return;let d=await jget('/api/backups');box.innerHTML='<div class="table-scroll"><table><tr><th>ID</th><th>Дата</th><th>Файл</th><th>Дія</th></tr>'+d.map(x=>`<tr><td>${x.id}</td><td>${x.created_at}</td><td>${x.filename}</td><td><button onclick="location.href='/api/backups/download/${x.id}'">Скачати</button><button class="btn-red" onclick="restoreBackup(${x.id})">Restore</button></td></tr>`).join('')+'</table></div>'}
+async function createBackup(){let j=await jpost('/api/backups/create',{});alert(j.ok?'Backup створено':j.error);loadAll()}
+async function restoreBackup(id){if(!confirm('Відновити backup?'))return;let j=await jpost('/api/backups/restore',{id});alert(j.ok?'Відновлено':j.error);location.reload()}
+
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+  localStorage.setItem('theme', document.body.classList.contains('dark')?'dark':'light');
+}
+async function loadTransfusionJournal(){
+  let box=document.getElementById('transfusionJournal');
+  if(!box)return;
+  let d=await jget('/api/transfusions');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>ID</th><th>Дата</th><th>Пацієнт</th><th>Компонент</th><th>Пакет</th><th>Лікар</th><th>Реакція</th></tr>'+
+    d.map(x=>`<tr><td>${x.id}</td><td>${x.used_at||x.issued_at||''}</td><td>${x.patient_name||''}</td><td>${x.component||''}</td><td><span class="qr-badge">${x.pack_no||x.qr_code||'-'}</span></td><td>${x.doctor_name||''}</td><td>${x.reaction_present||'Ні'}</td></tr>`).join('')+
+    '</table></div>';
+}
+
+function showOfflineStatus(text){
+  let box=document.getElementById('offlineStatus');
+  if(!box)return;
+  box.textContent=text;
+  box.className='offline-badge';
+  setTimeout(()=>{box.className='notice hidden'},5000);
+}
+async function flushOfflineQueue(){
+  if(!navigator.onLine)return;
+  let q=JSON.parse(localStorage.getItem('offlineQueue')||'[]');
+  if(!q.length)return;
+  let rest=[];
+  for(const item of q){
+    try{
+      let r=await fetch(item.u,{method:'POST',headers,body:JSON.stringify(item.d)});
+      if(!r.ok)rest.push(item);
+    }catch(e){rest.push(item)}
+  }
+  localStorage.setItem('offlineQueue',JSON.stringify(rest));
+  if(rest.length===0)showOfflineStatus('Offline-чергу синхронізовано');
+}
+window.addEventListener('online',flushOfflineQueue);
+window.addEventListener('offline',()=>showOfflineStatus('Немає інтернету. Дії будуть збережені локально.'));
+setInterval(flushOfflineQueue,10000);
+
+async function requestBrowserNotification(){
+  if(!('Notification' in window))return false;
+  if(Notification.permission==='granted')return true;
+  if(Notification.permission!=='denied'){
+    const p=await Notification.requestPermission();
+    return p==='granted';
+  }
+  return false;
+}
+async function testNotification(){
+  await jpost('/api/notifications/test',{});
+  if(await requestBrowserNotification()){
+    new Notification('Банк крові', {body:'Тестове повідомлення V5.1'});
+  }else{
+    alert('Тестове повідомлення створено в системі');
+  }
+}
+
+let qrStream=null;
+async function openQrScanner(){show('qrScannerSec');}
+async function startQrScanner(){
+  let video=document.getElementById('qrVideo'), result=document.getElementById('qrResult');
+  if(!video)return;
+  if(!('BarcodeDetector' in window)){
+    result.innerHTML='<div class="danger">BarcodeDetector недоступний. Введіть код вручну.</div>';
+    return;
+  }
+  qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+  video.srcObject=qrStream;
+  await video.play();
+  const detector=new BarcodeDetector({formats:['qr_code','code_128','ean_13','ean_8']});
+  const scan=async()=>{
+    if(!qrStream)return;
+    try{
+      const codes=await detector.detect(video);
+      if(codes.length){
+        const code=codes[0].rawValue;
+        result.innerHTML='<div class="good">Знайдено: <b>'+code+'</b></div>';
+        let inp=document.getElementById('qr_code');
+        if(inp)inp.value=code;
+        stopQrScanner();
+        return;
+      }
+    }catch(e){}
+    requestAnimationFrame(scan);
+  };
+  scan();
+}
+function stopQrScanner(){
+  if(qrStream){
+    qrStream.getTracks().forEach(t=>t.stop());
+    qrStream=null;
+  }
+}
+
+async function saveReactionRegistry(){
+  let j=await jpost('/api/reactions/register',{
+    request_id:val('rx_request_id'),
+    patient_name:val('rx_patient_name'),
+    reaction_type:val('rx_type'),
+    severity:val('rx_severity'),
+    description:val('rx_description'),
+    action_taken:val('rx_action'),
+    result:val('rx_result')
+  });
+  alert(j.ok?'Реакцію збережено':j.error);
+  loadReactionRegistry();
+}
+async function loadReactionRegistry(){
+  let box=document.getElementById('reactionRegistry');
+  if(!box)return;
+  let d=await jget('/api/reactions/registry');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>ID</th><th>Дата</th><th>Пацієнт</th><th>Тип</th><th>Тяжкість</th><th>Результат</th></tr>'+
+    d.map(x=>`<tr><td>${x.id}</td><td>${x.created_at}</td><td>${x.patient_name}</td><td>${x.reaction_type}</td><td>${x.severity}</td><td>${x.result}</td></tr>`).join('')+
+    '</table></div>';
+}
+async function saveTransfusionEvent(){
+  let j=await jpost('/api/transfusions/event',{
+    request_id:val('sign_request_id'),
+    nurse_name:val('sign_nurse'),
+    started_at:val('sign_started'),
+    finished_at:val('sign_finished'),
+    result:val('sign_result')
+  });
+  let box=document.getElementById('transfusionEvents');
+  if(j.ok){
+    box.innerHTML='<div class="sign-box">Підтверджено. Signature: '+j.signature+'</div>';
+  }else{
+    toast(j.error||'Помилка','warn');
+  }
+  loadTransfusionEvents();
+}
+async function loadTransfusionEvents(){
+  let box=document.getElementById('transfusionEvents');
+  if(!box)return;
+  let d=await jget('/api/transfusions/events');
+  box.innerHTML+=(box.innerHTML?'<hr>':'')+'<div class="table-scroll"><table><tr><th>ID</th><th>Вимога</th><th>Пацієнт</th><th>Початок</th><th>Кінець</th><th>Підпис</th></tr>'+
+    d.map(x=>`<tr><td>${x.id}</td><td>${x.request_id}</td><td>${x.patient_name}</td><td>${x.started_at}</td><td>${x.finished_at}</td><td>${(x.signature||'').slice(0,12)}...</td></tr>`).join('')+
+    '</table></div>';
+}
+
+async function loadTelegramStatus(){
+  let box=document.getElementById('telegramStatus');
+  if(!box)return;
+  let s=await jget('/api/telegram/status');
+  box.innerHTML=`<div class="dashboard-grid">
+    <div class="dashboard-box"><b>Увімкнено</b><br>${s.enabled?'✅ Так':'❌ Ні'}</div>
+    <div class="dashboard-box"><b>Bot token</b><br>${s.bot_configured?'✅ Є':'❌ Немає'}</div>
+    <div class="dashboard-box"><b>Chat ID</b><br>${s.chat_configured?'✅ Є':'❌ Немає'}</div>
+    <div class="dashboard-box"><b>Silent time</b><br>${s.silent_now?'🌙 Тихий режим':'🔔 Активний режим'}<br>${s.silent_start}:00 - ${s.silent_end}:00</div>
+  </div>`;
+  loadTelegramLogs();
+  loadTelegramQueue();
+}
+async function testTelegram(){
+  let r=await jpost('/api/telegram/test',{});
+  toast(r.ok?'✅ Telegram повідомлення відправлено':'⚠️ Telegram: '+(r.response||r.error||'помилка'), r.ok?'good':'warn');
+  loadTelegramStatus();
+}
+async function loadTelegramLogs(){
+  let box=document.getElementById('telegramLogs');
+  if(!box)return;
+  let d=await jget('/api/telegram/logs');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>Дата</th><th>Тип</th><th>OK</th><th>Повідомлення</th></tr>'+
+    d.map(x=>`<tr><td>${x.created_at}</td><td>${x.event_type}</td><td>${x.ok?'✅':'❌'}</td><td>${(x.message||'').slice(0,120)}</td></tr>`).join('')+
+    '</table></div>';
+}
+async function loadTelegramQueue(){
+  let box=document.getElementById('telegramQueue');
+  if(!box)return;
+  let d=await jget('/api/telegram/queue');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>Дата</th><th>Тип</th><th>Спроби</th><th>Sent</th><th>Помилка</th></tr>'+
+    d.map(x=>`<tr><td>${x.created_at}</td><td>${x.event_type}</td><td>${x.attempts}</td><td>${x.sent?'✅':'⏳'}</td><td>${(x.last_error||'').slice(0,100)}</td></tr>`).join('')+
+    '</table></div>';
+}
+async function retryTelegramQueue(){
+  let r=await jpost('/api/telegram/retry',{});
+  toast('Повторено. Надіслано: '+(r.sent||0),'good');
+  loadTelegramStatus();
+}
+
+async function loadHealth(){
+  let box=document.getElementById('healthBox'); if(!box)return;
+  let h=await jget('/api/health');
+  box.innerHTML=`<div class="dashboard-grid">
+    <div class="dashboard-box"><b>Система</b><br>${h.ok?'✅ OK':'❌ ERROR'}<br>${h.version}</div>
+    <div class="dashboard-box"><b>Database</b><br>${h.database}<br>${h.postgres?'PostgreSQL':'SQLite'}</div>
+    <div class="dashboard-box"><b>Backup age</b><br>${h.backup_age_hours??'немає'} год</div>
+    <div class="dashboard-box"><b>Telegram</b><br>${h.telegram_configured?'✅ Налаштовано':'⚠️ Не налаштовано'}</div>
+  </div>`;
+}
+async function runMaintenance(){
+  let r=await jpost('/api/maintenance/run',{});
+  toast(r.ok?'✅ Maintenance виконано':(r.error||'Помилка maintenance'),r.ok?'good':'warn');
+  loadHealth();
+}
+async function createRollbackSnapshot(){
+  let r=await jpost('/api/backups/rollback-snapshot',{});
+  toast(r.ok?'✅ Rollback snapshot створено':'⚠️ '+(r.error||'Помилка snapshot'),r.ok?'good':'warn');
+  loadHealth();
+}

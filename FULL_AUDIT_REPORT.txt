@@ -1,0 +1,86 @@
+BLOOD BANK V5.6.3 FULL BACKEND + FRONTEND + SECURITY AUDIT REPORT
+====================================================================================================
+
+Scope: backend, frontend, JS, PWA, API, roles, CSRF, tables, stock, requests, PDFs, Excel, Telegram, backup, audit, health, maintenance, security and Gunicorn.
+
+[OK] 01 Python backend compile — 
+[OK] 02 Frontend shared.js syntax — OK
+[OK] 03 PWA service-worker syntax — OK
+[OK] 04 manifest.json valid — {'name': 'Банк крові V5.6.3', 'short_name': 'Банк крові V5.6.3', 'start_url': '/?v=5.6.3', 'display': 'standalone', 'background_color': '#f6f7fb', 'theme_color': '#b91c1c', 'icons': [{'src': '/static/icons/icon.svg', 'sizes': '512x512', 'type': 'image/svg+xml'}], 'description': 'Система банку крові', 'scope': '/'}
+[OK] 05 Version labels V5.6.3 — 
+[OK] 06 PWA present — 
+[OK] 07 Responsive/mobile CSS — 
+[OK] 08 Dark theme — 
+[OK] 09 Toast UA validation — 
+[OK] 10 Dropdowns stock/request — 
+[OK] 11 Request archive tabs — 
+[OK] 12 Cryoprecipitate — 
+[OK] 13 QR scanner — 
+[OK] 14 Offline queue — 
+[OK] 15 Telegram UI/API code — 
+[OK] 16 Health/maintenance code — 
+[OK] 17 Audit export code — 
+[OK] 18 Backup/rollback code — 
+[OK] 19 DB indexes code — 
+[OK] 20 CSRF protection — 
+[OK] 21 Security headers — 
+[OK] 22 Role guards — 
+[OK] 23 Password hashing — 
+[OK] 24 API token protection — 
+[OK] 25 Docker/CI files — 
+[OK] 26 Login page renders — 200
+[OK] 27 manifest route — 200
+[OK] 28 service worker route — 200
+[OK] 29 health unauth ok — {'auto_backup_enabled': True, 'backup_age_hours': None, 'database': 'ok', 'database_error': '', 'ok': True, 'postgres': False, 'telegram_configured': False, 'time': '2026-05-08 13:04:27', 'version': 'V5.6.3'}
+[OK] 30 wrong login rejected — 200
+[OK] 31 default admin first login — 200
+[OK] 32 admin dashboard after password — 200
+[OK] 33 CSRF blocks POST — {'error': 'CSRF token invalid', 'ok': False}
+[OK] 34 create doctor — {'ok': True}
+[OK] 34 create nurse — {'ok': True}
+[OK] 34 create transfusion — {'ok': True}
+[OK] 37 users list — [{'active': 1, 'created_at': '2026-05-08 13:04:27', 'full_name': 'Адміністратор', 'id': 1, 'position': 'Завідувач', 'role': 'admin', 'username': 'Sepsis'}, {'active': 1, 'created_at': '2026-05-08 13:04:28', 'full_name': 'DOC', 'id': 2, 'position': 'doctor', 'role': 'doctor', 'username': 'doc'}, {'active': 1, 'created_at': '2026-05-08 13:04:28', 'full_name': 'NURSE', 'id': 3, 'position': 'nurse', 'role': 'nurse', 'username': 'nurse'}, {'active': 1, 'created_at': '2026-05-08 13:04:28', 'full_name': 'TRANS', 'id': 4, 'position': 'transfusion', 'role': 'transfusion', 'username': 'trans'}]
+[OK] 38 UA validation for missing group — {'error': 'Заповніть поле: Група крові', 'field': 'patient_group', 'ok': False}
+[OK] 39 stock add cryo QR — {'ok': True}
+[OK] 40 stock add RBC QR — {'ok': True}
+[OK] 41 stock table list — [{'component': 'Еритроцитарні компоненти', 'group': 'A(II)', 'qty': 10.0, 'rh': 'Rh+'}, {'component': 'Кріопреципітат', 'group': 'A(II)', 'qty': 2.0, 'rh': 'Rh+'}]
+[OK] 42 alerts API — {'expiry': [{'amount': 2.0, 'component': 'Кріопреципітат', 'created_at': '2026-05-08 13:04:28', 'donor_group': 'A(II)', 'donor_rh': 'Rh+', 'expiry': '2020-01-01', 'id': 1, 'note': '', 'pack_no': '', 'patient_name': '', 'qr_code': 'QR1', 'series': '', 'type': 'Надходження', 'user_id': 1}], 'low': [{'component': 'Кріопреципітат', 'group': 'A(II)', 'qty': 2.0, 'rh': 'Rh+'}]}
+[OK] 43 barcode endpoint — {'code': 'ABC123', 'label': 'Пакет/QR: ABC123', 'ok': True}
+[OK] 44 backup create — {'filename': 'blood_bank_backup_20260508_130428.db.zip', 'ok': True}
+[OK] 45 backup table list — [{'created_at': '2026-05-08 13:04:28', 'created_by': 'Sepsis', 'filename': 'blood_bank_backup_20260508_130428.db.zip', 'id': 1, 'size_bytes': 2660}]
+[OK] 46 rollback snapshot — {'filename': 'rollback_manual_20260508_130428.zip', 'ok': True}
+[OK] 47 maintenance run — {'ok': True}
+[OK] 48 doctor creates request — {'ok': True}
+[OK] 49 doctor own requests — [{'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-08 13:04:28', 'created_by': 2, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'DOC', 'doctor_position': 'doctor', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': '', 'pack_no': None, 'patient_group': 'A(II)', 'patient_name': 'Пацієнт Тест', 'patient_rh': 'Rh+', 'patient_status': '', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Планово', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}]
+[OK] 50 incompatible issue blocked — {'error': 'ABO несумісність: пацієнт A, донор B', 'ok': False}
+[OK] 51 compatible issue ok — {'ok': True}
+[OK] 52 nurse marks used — {'ok': True}
+[OK] 53 nurse records reaction — {'ok': True}
+[OK] 54 transfusion event signature — {'ok': True, 'signature': 'af6a612c078c1ed299087805670ebe70d4336e995b1ab2f2d5c6e55ab2df220d'}
+[OK] 55 reaction registry save — {'ok': True}
+[OK] 56 dashboard API — {'components': [{'amount': 1.0, 'component': 'Еритроцитарні компоненти'}], 'daily': [{'count': 1, 'day': '2026-05-08'}], 'departments': [{'count': 1, 'department': 'Хірургія'}], 'reactions': [{'count': 1, 'reaction_type': 'Фебрильна'}], 'requests': [{'count': 1, 'status': 'Використано'}]}
+[OK] 57 patient history — {'rows': [{'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': '', 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-08 13:04:28', 'created_by': 2, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'DOC', 'doctor_position': 'doctor', 'donor_group': 'A(II)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 1, 'issued_at': '2026-05-08 13:04:28', 'issued_by': 'Адміністратор', 'note': '', 'pack_no': 'P1', 'patient_group': 'A(II)', 'patient_name': 'Пацієнт Тест', 'patient_rh': 'Rh+', 'patient_status': '', 'reaction_description': 'озноб', 'reaction_present': 'Так', 'reaction_result': 'куповано', 'reaction_severity': 'Легка', 'reaction_type': 'Фебрильна', 'series': 'S1', 'status': 'Використано', 'urgency': 'Планово', 'use_confirm': 'перелито', 'used_at': '2026-01-01T12:00', 'used_by': 'NURSE', 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}]}
+[OK] 58 request PDF — 200; 25394
+[OK] 59 Excel export — 200; 5032
+[OK] 60 PDF export — 200; 23850
+[OK] 61 audit CSV export — 200; 2200
+[OK] 62 audit XLSX export — 200; 5855
+[OK] 63 delete to trash — {'ok': True}
+[OK] 64 trash list — [{'created_at': '2026-05-08 13:04:28', 'data': '{"id": 1, "created_at": "2026-05-08 13:04:28", "created_by": 2, "doctor_name": "DOC", "doctor_position": "doctor", "patient_name": "Пацієнт Тест", "birth_date": "1980-01-01", "address": "", "patient_status": "", "department": "Хірургія", "component": "Еритроцитарні компоненти", "patient_group": "A(II)", "patient_rh": "Rh+", "amount": 1.0, "urgency": "Планово", "diagnosis": "Діагноз", "note": "", "status": "Використано", "compatibility_ok": 1, "compatibility_warning": "", "approved_by": null, "issued_by": "Адміністратор", "issued_at": "2026-05-08 13:04:28", "pack_no": "P1", "series": "S1", "expiry": "2030-01-01", "donor_group": "A(II)", "donor_rh": "Rh+", "used_at": "2026-01-01T12:00", "used_by": "NURSE", "use_confirm": "перелито", "writeoff_at": null, "written_by": null, "writeoff_reason": null, "reaction_present": "Так", "reaction_type": "Фебрильна", "reaction_severity": "Легка", "reaction_description": "озноб", "reaction_result": "куповано"}', 'deleted_by': 'Sepsis', 'id': 1, 'reason': 'test', 'source_id': 1, 'source_table': 'requests'}]
+[OK] 65 restore from trash — {'ok': True}
+[OK] 66 audit security — {'failed_logins': [{'created_at': '2026-05-08 13:04:27', 'ip': '127.0.0.1', 'user_agent': None, 'username': 'bad'}], 'recent_actions': [{'action': 'restore_record', 'created_at': '2026-05-08 13:04:28', 'details': 'requests:1', 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'username': 'Sepsis'}, {'action': 'delete_record', 'created_at': '2026-05-08 13:04:28', 'details': 'requests:1', 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'username': 'Sepsis'}, {'action': 'login', 'created_at': '2026-05-08 13:04:28', 'details': 'Вхід у систему', 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'username': 'Sepsis'}, {'action': 'reaction_register', 'created_at': '2026-05-08 13:04:28', 'details': 'Пацієнт Тест', 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'username': 'nurse'}, {'action': 'transfusion_event', 'created_at': '2026-05-08 13:04:28', 'details': 'request=1', 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'username': 'nurse'}, {'action': 'reaction', 'created_at': '2026-05-08 13:04:28', 'details': '1', 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'username': 'nurse'}, {'action': 'request_used', 'created_at': '2026-05-08 13:04:28', 'details': '1', 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'username': 'nurse'}, {'action': 'change_password', 'created_at': '2026-05-08 13:04:28', 'details': 'Користувач змінив пароль', 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'username': 'nurse'}, {'action': 'login', 'created_at': '2026-05-08 13:04:28', 'details': 'Вхід у систему', 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'username': 'nurse'}, {'action': 'request_action', 'created_at': '2026-05-08 13:04:28', 'details': '1:issue', 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'username': 'Sepsis'}, {'action': 'login', 'created_at': '2026-05-08 13:04:28', 'details': 'Вхід у систему', 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'username': 'Sepsis'}, {'action': 'create_request', 'created_at': '2026-05-08 13:04:28', 'details': 'Пацієнт Тест'
+[OK] 66 full audit — {'audit': [{'action': 'restore_record', 'created_at': '2026-05-08 13:04:28', 'details': 'requests:1', 'id': 22, 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 1, 'username': 'Sepsis'}, {'action': 'delete_record', 'created_at': '2026-05-08 13:04:28', 'details': 'requests:1', 'id': 21, 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 1, 'username': 'Sepsis'}, {'action': 'login', 'created_at': '2026-05-08 13:04:28', 'details': 'Вхід у систему', 'id': 20, 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 1, 'username': 'Sepsis'}, {'action': 'reaction_register', 'created_at': '2026-05-08 13:04:28', 'details': 'Пацієнт Тест', 'id': 19, 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 3, 'username': 'nurse'}, {'action': 'transfusion_event', 'created_at': '2026-05-08 13:04:28', 'details': 'request=1', 'id': 18, 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 3, 'username': 'nurse'}, {'action': 'reaction', 'created_at': '2026-05-08 13:04:28', 'details': '1', 'id': 17, 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 3, 'username': 'nurse'}, {'action': 'request_used', 'created_at': '2026-05-08 13:04:28', 'details': '1', 'id': 16, 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 3, 'username': 'nurse'}, {'action': 'change_password', 'created_at': '2026-05-08 13:04:28', 'details': 'Користувач змінив пароль', 'id': 15, 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 3, 'username': 'nurse'}, {'action': 'login', 'created_at': '2026-05-08 13:04:28', 'details': 'Вхід у систему', 'id': 14, 'ip': '127.0.0.1', 'role': 'nurse', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 3, 'username': 'nurse'}, {'action': 'request_action', 'created_at': '2026-05-08 13:04:28', 'details': '1:issue', 'id': 13, 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkzeug/3.1.8', 'user_id': 1, 'username': 'Sepsis'}, {'action': 'login', 'created_at': '2026-05-08 13:04:28', 'details': 'Вхід у систему', 'id': 12, 'ip': '127.0.0.1', 'role': 'admin', 'user_agent': 'Werkze
+[OK] 66 backup encryption — {'enabled': False, 'note': 'V5.4 placeholder: use Render PostgreSQL backups or encrypted external backup worker for full production.', 'ok': True}
+[OK] 66 db health — {'ok': True, 'postgres': False, 'users': 4}
+[OK] 66 telegram status — {'anti_spam_minutes': 10, 'bot_configured': False, 'chat_configured': False, 'enabled': False, 'ok': True, 'silent_end': 7, 'silent_now': False, 'silent_start': 22}
+[OK] 71 telegram test clean — {'ok': False, 'response': 'Telegram disabled'}
+[OK] 72 external API blocks no token — {'error': 'API token invalid', 'ok': False}
+[OK] 73 external API token ok — {'ok': True, 'postgres': False, 'time': '2026-05-08 13:04:28', 'version': 'V5.5'}
+[OK] 74 external event ok — {'ok': True}
+[OK] 75 spellcheck — {'issues': [{'suggestion': 'температура', 'word': 'темммпература'}, {'suggestion': 'пацієнт', 'word': 'пацієнтт'}], 'ok': True}
+[OK] 76 notifications test — {'ok': True}
+[OK] 77 auto-expire — {'expired': 1, 'ok': True}
+[OK] 78 Gunicorn startup — 
+
+Підсумок: 78/78 тестів успішно.
+Висновок: критичних помилок у перевірених сценаріях не виявлено.
