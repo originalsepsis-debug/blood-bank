@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.6.3"
+APP_TITLE = "Банк крові V5.6.4"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -337,7 +337,7 @@ def init_db():
     except Exception:
         pass
 
-    create_user("Sepsis","1986","admin","Адміністратор","Завідувач",1,1)
+    ensure_default_admin()
 
 def make_backup(created_by="system"):
     ensure_dirs()
@@ -647,6 +647,30 @@ def health_payload():
             age=round((datetime.now()-dt).total_seconds()/3600,2)
     except Exception: pass
     return {"ok":ok,"version":"V5.6.3","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,"time":now()}
+
+
+def ensure_default_admin():
+    """V5.6.4: створює першого admin, якщо в БД немає активного admin."""
+    try:
+        admin = row("SELECT * FROM users WHERE role='admin' AND active=1 LIMIT 1")
+        if admin:
+            return False
+        existing = row("SELECT * FROM users WHERE username=?", ("Sepsis",))
+        if existing:
+            execute("UPDATE users SET role='admin', active=1, must_change_password=1 WHERE username=?", ("Sepsis",))
+            return True
+        create_user("Sepsis","1986","admin","Адміністратор","Завідувач",1,1)
+        try:
+            audit("admin_bootstrap", "Default admin Sepsis created")
+        except Exception:
+            pass
+        return True
+    except Exception as e:
+        try:
+            print("ADMIN_BOOTSTRAP_ERROR:", e)
+        except Exception:
+            pass
+        return False
 
 @app.before_request
 def before():
@@ -1357,7 +1381,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.6.3")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.6.4")
 
 
 @app.get("/api/telegram/status")
@@ -1456,6 +1480,15 @@ def api_maintenance_run():
     try: telegram_retry_queue()
     except Exception: pass
     return jsonify(ok=True)
+
+
+@app.post("/api/admin/bootstrap")
+def api_admin_bootstrap():
+    token = request.headers.get("X-API-Token","")
+    if not API_TOKEN or token != API_TOKEN:
+        return jsonify(ok=False,error="API token invalid"), 403
+    created = ensure_default_admin()
+    return jsonify(ok=True, created=created, login="Sepsis", password="1986")
 
 @app.get("/manifest.json")
 def manifest():
