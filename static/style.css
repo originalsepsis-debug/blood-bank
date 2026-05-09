@@ -254,3 +254,22 @@ body.dark #toastBox.toast.warn{
 
 /* V5.6.3 Production */
 #maintenanceSec .dashboard-box{min-height:90px}
+
+/* V5.7 Telegram PRO */
+#telegramPersonalSec label{
+  display:block;
+  padding:8px 0;
+  font-weight:800;
+}
+#telegramConnectBtn{
+  text-decoration:none;
+  align-items:center;
+  justify-content:center;
+}
+
+/* V5.7 Telegram PRO + PWA */
+#telegramPersonalSec label{display:block;padding:8px 0;font-weight:800}
+#telegramConnectBtn{text-decoration:none;align-items:center;justify-content:center}
+#pwaInstallBtn:disabled{opacity:.55;filter:grayscale(1)}
+#pwaHelpBox{line-height:1.6}
+.actions-row a.btn-blue,.actions-row a.btn-green{display:inline-flex;text-align:center}

@@ -369,3 +369,155 @@ async function createRollbackSnapshot(){
   toast(r.ok?'✅ Rollback snapshot створено':'⚠️ '+(r.error||'Помилка snapshot'),r.ok?'good':'warn');
   loadHealth();
 }
+
+async function loadTelegramMe(){
+  let box=document.getElementById('telegramMeBox');
+  if(!box)return;
+  let d=await jget('/api/telegram/me');
+  let a=document.getElementById('telegramConnectBtn');
+  if(a){
+    if(d.link_url){a.href=d.link_url; a.style.display='inline-flex'}
+    else{a.href='#'; a.style.display='none'}
+  }
+  box.innerHTML=`<div class="dashboard-grid">
+    <div class="dashboard-box"><b>Bot</b><br>${d.bot_username?'@'+d.bot_username:'⚠️ TELEGRAM_BOT_USERNAME не вказано'}</div>
+    <div class="dashboard-box"><b>Chat ID</b><br>${d.telegram_chat_id||'не підключено'}</div>
+    <div class="dashboard-box"><b>Username</b><br>${d.telegram_username||'—'}</div>
+    <div class="dashboard-box"><b>Статус</b><br>${d.telegram_enabled?'✅ Увімкнено':'⚠️ Вимкнено'}</div>
+  </div>`;
+  const s=d.settings||{};
+  let set=(id,v)=>{let el=document.getElementById(id); if(el)el.checked=!!v};
+  set('tg_set_enabled',d.telegram_enabled);
+  set('tg_set_new_requests',s.new_requests);
+  set('tg_set_critical',s.critical);
+  set('tg_set_expiring',s.expiring);
+  set('tg_set_reactions',s.reactions);
+  set('tg_set_backups',s.backups);
+}
+async function saveTelegramMeSettings(){
+  let get=id=>{let el=document.getElementById(id); return !!(el&&el.checked)};
+  let r=await jpost('/api/telegram/me/settings',{
+    telegram_enabled:get('tg_set_enabled'),
+    new_requests:get('tg_set_new_requests'),
+    critical:get('tg_set_critical'),
+    expiring:get('tg_set_expiring'),
+    reactions:get('tg_set_reactions'),
+    backups:get('tg_set_backups')
+  });
+  toast(r.ok?'✅ Telegram налаштування збережено':(r.error||'Помилка'),'good');
+  loadTelegramMe();
+}
+async function testMyTelegram(){
+  let r=await jpost('/api/telegram/me/test',{});
+  toast(r.ok?'✅ Повідомлення відправлено':'⚠️ '+(r.response||r.error||'Telegram не підключено'), r.ok?'good':'warn');
+}
+async function pollTelegram(){
+  let r=await jpost('/api/telegram/poll',{});
+  toast(r.ok?'✅ Telegram синхронізовано. Оброблено: '+(r.processed||0):'⚠️ '+(r.error||'Помилка'), r.ok?'good':'warn');
+  loadTelegramMe();
+}
+
+let deferredPWAInstall=null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPWAInstall=e;
+  updatePWAStatus();
+});
+window.addEventListener('appinstalled', ()=>{
+  deferredPWAInstall=null;
+  toast('✅ PWA додаток встановлено','good');
+  updatePWAStatus();
+});
+function isStandalonePWA(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+}
+function updatePWAStatus(){
+  let box=document.getElementById('pwaStatusBox');
+  let btn=document.getElementById('pwaInstallBtn');
+  if(!box)return;
+  let standalone=isStandalonePWA();
+  box.innerHTML=`<div class="dashboard-grid">
+    <div class="dashboard-box"><b>Статус</b><br>${standalone?'✅ Встановлено':'🌐 В браузері'}</div>
+    <div class="dashboard-box"><b>Install prompt</b><br>${deferredPWAInstall?'✅ Доступний':'⚠️ Не доступний'}</div>
+    <div class="dashboard-box"><b>Service Worker</b><br>${'serviceWorker' in navigator?'✅ Є':'❌ Немає'}</div>
+  </div>`;
+  if(btn) btn.disabled=standalone;
+}
+async function installPWA(){
+  if(isStandalonePWA()){toast('✅ Додаток вже встановлено','good');return}
+  if(deferredPWAInstall){
+    deferredPWAInstall.prompt();
+    const choice=await deferredPWAInstall.userChoice;
+    deferredPWAInstall=null;
+    toast(choice.outcome==='accepted'?'✅ Встановлення підтверджено':'⚠️ Встановлення скасовано', choice.outcome==='accepted'?'good':'warn');
+    updatePWAStatus();
+    return;
+  }
+  showPWAHelp();
+  toast('ℹ️ Використай інструкцію встановлення для свого браузера','warn');
+}
+function showPWAHelp(){
+  let box=document.getElementById('pwaHelpBox');
+  if(box) box.style.display = box.style.display==='none' ? 'block' : 'none';
+}
+async function clearPWACache(){
+  try{
+    if('caches' in window){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.update()));
+    }
+    toast('✅ Кеш PWA оновлено. Перезавантаж сторінку','good');
+  }catch(e){toast('⚠️ Не вдалося очистити кеш','warn')}
+}
+
+async function loadTelegramMe(){
+  let box=document.getElementById('telegramMeBox');
+  if(!box)return;
+  let d=await jget('/api/telegram/me');
+  let a=document.getElementById('telegramConnectBtn');
+  if(a){
+    if(d.link_url){a.href=d.link_url; a.style.display='inline-flex'}
+    else{a.href='#'; a.style.display='none'}
+  }
+  box.innerHTML=`<div class="dashboard-grid">
+    <div class="dashboard-box"><b>Bot</b><br>${d.bot_username?'@'+d.bot_username:'⚠️ TELEGRAM_BOT_USERNAME не вказано'}</div>
+    <div class="dashboard-box"><b>Chat ID</b><br>${d.telegram_chat_id||'не підключено'}</div>
+    <div class="dashboard-box"><b>Username</b><br>${d.telegram_username||'—'}</div>
+    <div class="dashboard-box"><b>Статус</b><br>${d.telegram_enabled?'✅ Увімкнено':'⚠️ Вимкнено'}</div>
+  </div>`;
+  const s=d.settings||{};
+  const set=(id,v)=>{let el=document.getElementById(id); if(el)el.checked=!!v};
+  set('tg_set_enabled',d.telegram_enabled);
+  set('tg_set_new_requests',s.new_requests);
+  set('tg_set_critical',s.critical);
+  set('tg_set_expiring',s.expiring);
+  set('tg_set_reactions',s.reactions);
+  set('tg_set_backups',s.backups);
+}
+async function saveTelegramMeSettings(){
+  let get=id=>{let el=document.getElementById(id); return !!(el&&el.checked)};
+  let r=await jpost('/api/telegram/me/settings',{
+    telegram_enabled:get('tg_set_enabled'),
+    new_requests:get('tg_set_new_requests'),
+    critical:get('tg_set_critical'),
+    expiring:get('tg_set_expiring'),
+    reactions:get('tg_set_reactions'),
+    backups:get('tg_set_backups')
+  });
+  toast(r.ok?'✅ Telegram налаштування збережено':(r.error||'Помилка'), r.ok?'good':'warn');
+  loadTelegramMe();
+}
+async function testMyTelegram(){
+  let r=await jpost('/api/telegram/me/test',{});
+  toast(r.ok?'✅ Повідомлення відправлено':'⚠️ '+(r.response||r.error||'Telegram не підключено'), r.ok?'good':'warn');
+}
+async function pollTelegram(){
+  let r=await jpost('/api/telegram/poll',{});
+  toast(r.ok?'✅ Telegram синхронізовано. Оброблено: '+(r.processed||0):'⚠️ '+(r.error||'Помилка'), r.ok?'good':'warn');
+  loadTelegramMe();
+}
+document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{updatePWAStatus();loadTelegramMe();},500)});

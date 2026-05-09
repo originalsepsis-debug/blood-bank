@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.6.5"
+APP_TITLE = "Банк крові V5.7"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -25,6 +25,7 @@ BACKUP_DIR = os.environ.get("BACKUP_DIR", "backups")
 SESSION_TIMEOUT_MINUTES = int(os.environ.get("SESSION_TIMEOUT_MINUTES","30"))
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN","")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID","")
+TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME","")
 TELEGRAM_ENABLED = os.environ.get("TELEGRAM_ENABLED","1") == "1"
 TELEGRAM_SILENT_START = int(os.environ.get("TELEGRAM_SILENT_START","22"))
 TELEGRAM_SILENT_END = int(os.environ.get("TELEGRAM_SILENT_END","7"))
@@ -337,6 +338,23 @@ def init_db():
     except Exception:
         pass
 
+    
+    # V5.7 Telegram PRO user columns
+    for col_sql in [
+        "ALTER TABLE users ADD COLUMN telegram_chat_id TEXT",
+        "ALTER TABLE users ADD COLUMN telegram_username TEXT",
+        "ALTER TABLE users ADD COLUMN telegram_enabled INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN telegram_notify_new_requests INTEGER DEFAULT 1",
+        "ALTER TABLE users ADD COLUMN telegram_notify_critical INTEGER DEFAULT 1",
+        "ALTER TABLE users ADD COLUMN telegram_notify_expiring INTEGER DEFAULT 1",
+        "ALTER TABLE users ADD COLUMN telegram_notify_reactions INTEGER DEFAULT 1",
+        "ALTER TABLE users ADD COLUMN telegram_notify_backups INTEGER DEFAULT 0"
+    ]:
+        try:
+            execute(col_sql)
+        except Exception:
+            pass
+
     ensure_default_admin()
 
 def make_backup(created_by="system"):
@@ -549,7 +567,7 @@ def telegram_event_new_request(req):
         f"Група/Rh: {req.get('patient_group','')} {req.get('patient_rh','')}\\n"
         f"Кількість: {req.get('amount','')}"
     )
-    return telegram_alert(msg, "new_request")
+    return telegram_broadcast_roles(msg, ("admin","transfusion"), "new_request")
 
 def telegram_event_reaction(req_id, reaction_type, severity, patient=""):
     msg = (
@@ -559,10 +577,10 @@ def telegram_event_reaction(req_id, reaction_type, severity, patient=""):
         f"Тип: {reaction_type}\\n"
         f"Тяжкість: {severity}"
     )
-    return telegram_alert(msg, "reaction", force=True)
+    return telegram_broadcast_roles(msg, ("admin","transfusion"), "reaction", force=True)
 
 def telegram_event_backup(ok=True):
-    return telegram_alert("✅ Backup створено" if ok else "❌ Backup помилка", "backup")
+    return telegram_broadcast_roles("✅ Backup створено" if ok else "❌ Backup помилка", ("admin","transfusion"), "backup")
 
 def telegram_retry_queue(limit=20):
     table = telegram_table("telegram_queue")
@@ -672,6 +690,138 @@ def ensure_default_admin():
         except Exception:
             pass
         return False
+
+
+def telegram_user_enabled(user_id=None, event_type=None):
+    try:
+        if user_id is None:
+            u = current_user()
+            user_id = u.get("id")
+        u = row("SELECT * FROM users WHERE id=?", (user_id,))
+        if not u:
+            return False
+        if not u.get("telegram_enabled") or not u.get("telegram_chat_id"):
+            return False
+        if event_type == "new_request" and int(u.get("telegram_notify_new_requests") or 0) != 1:
+            return False
+        if event_type == "critical" and int(u.get("telegram_notify_critical") or 0) != 1:
+            return False
+        if event_type == "expiring" and int(u.get("telegram_notify_expiring") or 0) != 1:
+            return False
+        if event_type == "reaction" and int(u.get("telegram_notify_reactions") or 0) != 1:
+            return False
+        if event_type == "backup" and int(u.get("telegram_notify_backups") or 0) != 1:
+            return False
+        return True
+    except Exception:
+        return False
+
+def telegram_send_to_user(user_id, message, event_type="system", force=False):
+    try:
+        u = row("SELECT * FROM users WHERE id=?", (user_id,))
+        if not u or not u.get("telegram_chat_id"):
+            return False, "user telegram not configured"
+        if not telegram_user_enabled(user_id, event_type) and not force:
+            return False, "user telegram disabled"
+        return telegram_send_message(message, event_type=event_type, chat_id=u.get("telegram_chat_id"), force=force)
+    except Exception as e:
+        return False, str(e)
+
+def telegram_broadcast_roles(message, roles=("admin","transfusion"), event_type="system", force=False):
+    sent = 0
+    try:
+        placeholders = ",".join(["?"]*len(roles))
+        users = rows(f"SELECT * FROM users WHERE active=1 AND role IN ({placeholders})", tuple(roles))
+        for u in users:
+            ok, _ = telegram_send_to_user(u["id"], message, event_type=event_type, force=force)
+            if ok:
+                sent += 1
+    except Exception:
+        pass
+    # fallback to global chat id
+    if sent == 0 and TELEGRAM_CHAT_ID:
+        ok, _ = telegram_send_message(message, event_type=event_type, force=force)
+        if ok:
+            sent += 1
+    return sent
+
+def telegram_link_url(user=None):
+    try:
+        u = user or current_user()
+        username = TELEGRAM_BOT_USERNAME.strip().lstrip("@")
+        if not username:
+            return ""
+        return f"https://t.me/{username}?start=link_{u.get('id')}_{u.get('username')}"
+    except Exception:
+        return ""
+
+def telegram_process_update(update):
+    try:
+        msg = update.get("message") or update.get("edited_message") or {}
+        text = (msg.get("text") or "").strip()
+        chat = msg.get("chat") or {}
+        from_user = msg.get("from") or {}
+        chat_id = str(chat.get("id") or "")
+        tg_username = from_user.get("username") or chat.get("username") or ""
+        if not chat_id:
+            return "no chat"
+
+        if text.startswith("/start"):
+            parts = text.split(maxsplit=1)
+            payload = parts[1] if len(parts) > 1 else ""
+            if payload.startswith("link_"):
+                bits = payload.split("_")
+                uid = None
+                try:
+                    uid = int(bits[1])
+                except Exception:
+                    uid = None
+                if uid:
+                    execute("""UPDATE users SET telegram_chat_id=?, telegram_username=?, telegram_enabled=1
+                               WHERE id=?""", (chat_id, tg_username, uid))
+                    telegram_send_message("✅ Telegram підключено до користувача в системі Банк крові.", "link", chat_id=chat_id, force=True)
+                    return "linked"
+            telegram_send_message("👋 Бот Банку крові активний. Команди: /stock /critical /requests /expiring", "start", chat_id=chat_id, force=True)
+            return "start"
+
+        if text.startswith("/stock"):
+            stock = rows("SELECT component, donor_group, donor_rh, SUM(amount) AS total FROM stock_entries GROUP BY component, donor_group, donor_rh ORDER BY component LIMIT 25")
+            lines = ["📦 <b>Склад крові</b>"]
+            for s in stock:
+                lines.append(f"{s.get('component','')} {s.get('donor_group','')} {s.get('donor_rh','')}: {s.get('total',0)}")
+            telegram_send_message("\\n".join(lines) if len(lines)>1 else "Склад порожній", "command", chat_id=chat_id, force=True)
+            return "stock"
+
+        if text.startswith("/critical"):
+            alerts = get_alerts_data() if "get_alerts_data" in globals() else {}
+            low = alerts.get("low", []) if isinstance(alerts, dict) else []
+            lines = ["🔴 <b>Критичні залишки</b>"]
+            for x in low[:20]:
+                lines.append(f"{x.get('component','')} {x.get('donor_group','')} {x.get('donor_rh','')}: {x.get('amount','')}")
+            telegram_send_message("\\n".join(lines) if len(lines)>1 else "✅ Критичних залишків немає", "command", chat_id=chat_id, force=True)
+            return "critical"
+
+        if text.startswith("/requests"):
+            req = rows("SELECT id,patient_name,department,component,status FROM requests ORDER BY id DESC LIMIT 10")
+            lines = ["📋 <b>Останні вимоги</b>"]
+            for r in req:
+                lines.append(f"№{r.get('id')} {r.get('patient_name','')} — {r.get('component','')} — {r.get('status','')}")
+            telegram_send_message("\\n".join(lines) if len(lines)>1 else "Вимог немає", "command", chat_id=chat_id, force=True)
+            return "requests"
+
+        if text.startswith("/expiring"):
+            alerts = get_alerts_data() if "get_alerts_data" in globals() else {}
+            exp = alerts.get("expiry", []) if isinstance(alerts, dict) else []
+            lines = ["⏰ <b>Термін придатності</b>"]
+            for x in exp[:20]:
+                lines.append(f"{x.get('component','')} {x.get('donor_group','')} {x.get('donor_rh','')} до {x.get('expiry','')}: {x.get('amount','')}")
+            telegram_send_message("\\n".join(lines) if len(lines)>1 else "✅ Немає близьких термінів", "command", chat_id=chat_id, force=True)
+            return "expiring"
+
+        telegram_send_message("Команди: /stock /critical /requests /expiring", "command", chat_id=chat_id, force=True)
+        return "unknown"
+    except Exception as e:
+        return f"error: {e}"
 
 @app.before_request
 def before():
@@ -1392,7 +1542,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.6.5")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.7")
 
 
 @app.get("/api/telegram/status")
@@ -1509,6 +1659,75 @@ def api_admin_bootstrap_browser():
         return jsonify(ok=False,error="API token invalid"), 403
     created = ensure_default_admin()
     return jsonify(ok=True, created=created, login="Sepsis", password="1986")
+
+
+@app.get("/api/telegram/me")
+@login_required
+def api_telegram_me():
+    u=current_user()
+    link=telegram_link_url(u)
+    return jsonify(ok=True,
+        telegram_chat_id=u.get("telegram_chat_id",""),
+        telegram_username=u.get("telegram_username",""),
+        telegram_enabled=bool(u.get("telegram_enabled")),
+        link_url=link,
+        bot_username=TELEGRAM_BOT_USERNAME,
+        settings={
+            "new_requests": int(u.get("telegram_notify_new_requests") or 0),
+            "critical": int(u.get("telegram_notify_critical") or 0),
+            "expiring": int(u.get("telegram_notify_expiring") or 0),
+            "reactions": int(u.get("telegram_notify_reactions") or 0),
+            "backups": int(u.get("telegram_notify_backups") or 0)
+        })
+
+@app.post("/api/telegram/me/settings")
+@login_required
+def api_telegram_me_settings():
+    u=current_user()
+    d=request.json or {}
+    execute("""UPDATE users SET telegram_enabled=?, telegram_notify_new_requests=?, telegram_notify_critical=?,
+               telegram_notify_expiring=?, telegram_notify_reactions=?, telegram_notify_backups=? WHERE id=?""",
+            (1 if d.get("telegram_enabled") else 0,
+             1 if d.get("new_requests") else 0,
+             1 if d.get("critical") else 0,
+             1 if d.get("expiring") else 0,
+             1 if d.get("reactions") else 0,
+             1 if d.get("backups") else 0,
+             u["id"]))
+    return jsonify(ok=True)
+
+@app.post("/api/telegram/me/test")
+@login_required
+def api_telegram_me_test():
+    u=current_user()
+    ok, resp = telegram_send_to_user(u["id"], f"✅ Тест персонального Telegram для {u.get('full_name') or u.get('username')}", "test", force=True)
+    return jsonify(ok=ok, response=str(resp)[:1000])
+
+@app.route("/telegram/webhook", methods=["GET","POST"])
+def telegram_webhook():
+    if request.method == "GET":
+        return jsonify(ok=True, info="Telegram webhook endpoint active")
+    update = request.json or {}
+    result = telegram_process_update(update)
+    return jsonify(ok=True, result=result)
+
+@app.post("/api/telegram/poll")
+@role_required("admin","transfusion")
+def api_telegram_poll():
+    if not TELEGRAM_BOT_TOKEN:
+        return jsonify(ok=False,error="TELEGRAM_BOT_TOKEN missing"), 400
+    try:
+        import urllib.request, json as _json
+        url=f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
+        with urllib.request.urlopen(url, timeout=8) as resp:
+            data=_json.loads(resp.read().decode("utf-8","ignore"))
+        count=0
+        for upd in data.get("result",[]):
+            telegram_process_update(upd)
+            count += 1
+        return jsonify(ok=True, processed=count)
+    except Exception as e:
+        return jsonify(ok=False,error=str(e)), 500
 
 @app.get("/manifest.json")
 def manifest():

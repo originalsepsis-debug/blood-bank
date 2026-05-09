@@ -1,4 +1,4 @@
-<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V5.6.5</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a></header><main class="container"><div id="offlineStatus" class="notice hidden"></div><section class="stats"><div class="stat red">Еритроцитарні компоненти <b id="rbcStat">0</b></div><div class="stat yellow">Плазма <b id="plasmaStat">0</b></div><div class="stat blue">Тромбоцити <b id="pltStat">0</b></div><div class="stat purple">Кріопреципітат <b id="cryoStat">0</b></div><div class="stat dark">Критичні залишки <b id="lowStat">0</b></div></section><nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button onclick="show('stockSec')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button onclick="show('patientsSec')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button></nav><section id="requestsSec" class="card section active"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid"><input id="patient_name" placeholder="ПІБ пацієнта"><input id="birth_date" type="date"><input id="address" placeholder="Адреса"><input id="patient_status" placeholder="Статус пацієнта"><input id="department" placeholder="Відділення"><select id="component">
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V5.7</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a></header><main class="container"><div id="offlineStatus" class="notice hidden"></div><section class="stats"><div class="stat red">Еритроцитарні компоненти <b id="rbcStat">0</b></div><div class="stat yellow">Плазма <b id="plasmaStat">0</b></div><div class="stat blue">Тромбоцити <b id="pltStat">0</b></div><div class="stat purple">Кріопреципітат <b id="cryoStat">0</b></div><div class="stat dark">Критичні залишки <b id="lowStat">0</b></div></section><nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button onclick="show('stockSec')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button onclick="show('patientsSec')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button><button onclick="show('pwaInstallSec')">PWA</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button></nav><section id="requestsSec" class="card section active"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid"><input id="patient_name" placeholder="ПІБ пацієнта"><input id="birth_date" type="date"><input id="address" placeholder="Адреса"><input id="patient_status" placeholder="Статус пацієнта"><input id="department" placeholder="Відділення"><select id="component">
 <option value="">Виберіть компонент</option>
 <option>Еритроцитарні компоненти</option>
 <option>Плазма</option>
@@ -101,4 +101,74 @@
 <a class="btn-blue" href="/api/audit/export/csv">Audit CSV</a>
 </div>
 </section>
+
+<section id="telegramPersonalSec" class="card section">
+<h2>Мій Telegram</h2>
+<div class="notice">
+Натисніть «Підключити Telegram», відкрийте бота і натисніть START.
+</div>
+<div id="telegramMeBox"></div>
+<div class="actions-row">
+<a id="telegramConnectBtn" class="btn-green" href="#" target="_blank">🔗 Підключити Telegram</a>
+<button class="btn-blue" onclick="loadTelegramMe()">Оновити</button>
+<button class="btn-orange" onclick="testMyTelegram()">Тест мені</button>
+<button class="btn-blue" onclick="pollTelegram()">Синхронізувати START</button>
+</div>
+<h3>Які сповіщення отримувати</h3>
+<label><input type="checkbox" id="tg_set_enabled"> Увімкнути персональні сповіщення</label><br>
+<label><input type="checkbox" id="tg_set_new_requests"> Нові вимоги</label><br>
+<label><input type="checkbox" id="tg_set_critical"> Критичні залишки</label><br>
+<label><input type="checkbox" id="tg_set_expiring"> Закінчення терміну</label><br>
+<label><input type="checkbox" id="tg_set_reactions"> Трансфузійні реакції</label><br>
+<label><input type="checkbox" id="tg_set_backups"> Backup</label><br>
+<button class="btn-green" onclick="saveTelegramMeSettings()">Зберегти налаштування</button>
+<div class="notice">
+Команди бота: <b>/stock</b>, <b>/critical</b>, <b>/requests</b>, <b>/expiring</b>
+</div>
+</section>
+
+
+<section id="pwaInstallSec" class="card section">
+<h2>Встановити додаток PWA</h2>
+<div class="notice">
+PWA відкриває сайт як окремий додаток без адресного рядка.
+</div>
+<div id="pwaStatusBox"></div>
+<div class="actions-row">
+<button id="pwaInstallBtn" class="btn-green" onclick="installPWA()">📲 Встановити додаток</button>
+<button class="btn-blue" onclick="showPWAHelp()">ℹ️ Інструкція</button>
+<button class="btn-orange" onclick="clearPWACache()">🔄 Оновити кеш</button>
+</div>
+<div id="pwaHelpBox" class="notice" style="display:none">
+<b>Android Chrome:</b> ⋮ → Встановити додаток.<br>
+<b>iPhone Safari:</b> Поділитись → На початковий екран.<br>
+Якщо кнопка не активна — браузер ще не дав дозвіл або додаток вже встановлено.
+</div>
+</section>
+
+<section id="telegramPersonalSec" class="card section">
+<h2>Мій Telegram</h2>
+<div class="notice">
+Натисніть «Підключити Telegram», відкрийте бота і натисніть START.
+</div>
+<div id="telegramMeBox"></div>
+<div class="actions-row">
+<a id="telegramConnectBtn" class="btn-green" href="#" target="_blank">🔗 Підключити Telegram</a>
+<button class="btn-blue" onclick="loadTelegramMe()">Оновити</button>
+<button class="btn-orange" onclick="testMyTelegram()">Тест мені</button>
+<button class="btn-blue" onclick="pollTelegram()">Синхронізувати START</button>
+</div>
+<h3>Які сповіщення отримувати</h3>
+<label><input type="checkbox" id="tg_set_enabled"> Увімкнути персональні сповіщення</label><br>
+<label><input type="checkbox" id="tg_set_new_requests"> Нові вимоги</label><br>
+<label><input type="checkbox" id="tg_set_critical"> Критичні залишки</label><br>
+<label><input type="checkbox" id="tg_set_expiring"> Закінчення терміну</label><br>
+<label><input type="checkbox" id="tg_set_reactions"> Трансфузійні реакції</label><br>
+<label><input type="checkbox" id="tg_set_backups"> Backup</label><br>
+<button class="btn-green" onclick="saveTelegramMeSettings()">Зберегти налаштування</button>
+<div class="notice">
+Команди бота: <b>/stock</b>, <b>/critical</b>, <b>/requests</b>, <b>/expiring</b>
+</div>
+</section>
+
 </main><script>window.APP={role:"{{user.role}}",csrf:"{{csrf}}"};</script><script src="/static/shared.js"></script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/service-worker.js').catch(()=>{})}</script></body></html>
