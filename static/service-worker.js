@@ -1,4 +1,4 @@
-const CACHE='blood-bank-v5-7-cache';
+const CACHE='blood-bank-v5-7-1-cache';
 const ASSETS=['/','/static/style.css','/static/shared.js','/manifest.json','/api/dashboard'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});

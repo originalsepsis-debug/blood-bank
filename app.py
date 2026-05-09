@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.7"
+APP_TITLE = "Банк крові V5.7.1"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -823,6 +823,25 @@ def telegram_process_update(update):
     except Exception as e:
         return f"error: {e}"
 
+
+def ensure_telegram_user_columns():
+    cols = [
+        ("telegram_chat_id", "TEXT"),
+        ("telegram_username", "TEXT"),
+        ("telegram_enabled", "INTEGER DEFAULT 0"),
+        ("telegram_notify_new_requests", "INTEGER DEFAULT 1"),
+        ("telegram_notify_critical", "INTEGER DEFAULT 1"),
+        ("telegram_notify_expiring", "INTEGER DEFAULT 1"),
+        ("telegram_notify_reactions", "INTEGER DEFAULT 1"),
+        ("telegram_notify_backups", "INTEGER DEFAULT 0"),
+    ]
+    for name, typ in cols:
+        try:
+            execute(f"ALTER TABLE users ADD COLUMN {name} {typ}")
+        except Exception:
+            pass
+    return True
+
 @app.before_request
 def before():
     if REQUIRE_HTTPS and request.headers.get("X-Forwarded-Proto","https") != "https":
@@ -892,6 +911,11 @@ def index():
 
 @app.post("/login")
 def login():
+    # V571_LOGIN_TELEGRAM_MIGRATION
+    try:
+        ensure_telegram_user_columns()
+    except Exception:
+        pass
     # V565_LOGIN_ADMIN_BOOTSTRAP
     try:
         ensure_default_admin()
@@ -1542,7 +1566,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.7")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.7.1")
 
 
 @app.get("/api/telegram/status")
@@ -1664,37 +1688,45 @@ def api_admin_bootstrap_browser():
 @app.get("/api/telegram/me")
 @login_required
 def api_telegram_me():
-    u=current_user()
-    link=telegram_link_url(u)
-    return jsonify(ok=True,
-        telegram_chat_id=u.get("telegram_chat_id",""),
-        telegram_username=u.get("telegram_username",""),
-        telegram_enabled=bool(u.get("telegram_enabled")),
-        link_url=link,
-        bot_username=TELEGRAM_BOT_USERNAME,
-        settings={
-            "new_requests": int(u.get("telegram_notify_new_requests") or 0),
-            "critical": int(u.get("telegram_notify_critical") or 0),
-            "expiring": int(u.get("telegram_notify_expiring") or 0),
-            "reactions": int(u.get("telegram_notify_reactions") or 0),
-            "backups": int(u.get("telegram_notify_backups") or 0)
-        })
+    try:
+        ensure_telegram_user_columns()
+        u=current_user()
+        link=telegram_link_url(u)
+        return jsonify(ok=True,
+            telegram_chat_id=u.get("telegram_chat_id",""),
+            telegram_username=u.get("telegram_username",""),
+            telegram_enabled=bool(u.get("telegram_enabled")),
+            link_url=link,
+            bot_username=TELEGRAM_BOT_USERNAME,
+            settings={
+                "new_requests": int(u.get("telegram_notify_new_requests") or 0),
+                "critical": int(u.get("telegram_notify_critical") or 0),
+                "expiring": int(u.get("telegram_notify_expiring") or 0),
+                "reactions": int(u.get("telegram_notify_reactions") or 0),
+                "backups": int(u.get("telegram_notify_backups") or 0)
+            })
+    except Exception as e:
+        return jsonify(ok=False, error=f"Telegram me error: {str(e)}"), 500
 
 @app.post("/api/telegram/me/settings")
 @login_required
 def api_telegram_me_settings():
-    u=current_user()
-    d=request.json or {}
-    execute("""UPDATE users SET telegram_enabled=?, telegram_notify_new_requests=?, telegram_notify_critical=?,
-               telegram_notify_expiring=?, telegram_notify_reactions=?, telegram_notify_backups=? WHERE id=?""",
-            (1 if d.get("telegram_enabled") else 0,
-             1 if d.get("new_requests") else 0,
-             1 if d.get("critical") else 0,
-             1 if d.get("expiring") else 0,
-             1 if d.get("reactions") else 0,
-             1 if d.get("backups") else 0,
-             u["id"]))
-    return jsonify(ok=True)
+    try:
+        ensure_telegram_user_columns()
+        u=current_user()
+        d=request.json or {}
+        execute("""UPDATE users SET telegram_enabled=?, telegram_notify_new_requests=?, telegram_notify_critical=?,
+                   telegram_notify_expiring=?, telegram_notify_reactions=?, telegram_notify_backups=? WHERE id=?""",
+                (1 if d.get("telegram_enabled") else 0,
+                 1 if d.get("new_requests") else 0,
+                 1 if d.get("critical") else 0,
+                 1 if d.get("expiring") else 0,
+                 1 if d.get("reactions") else 0,
+                 1 if d.get("backups") else 0,
+                 u["id"]))
+        return jsonify(ok=True)
+    except Exception as e:
+        return jsonify(ok=False, error=f"Telegram settings error: {str(e)}"), 500
 
 @app.post("/api/telegram/me/test")
 @login_required

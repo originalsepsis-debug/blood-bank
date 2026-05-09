@@ -273,3 +273,8 @@ body.dark #toastBox.toast.warn{
 #pwaInstallBtn:disabled{opacity:.55;filter:grayscale(1)}
 #pwaHelpBox{line-height:1.6}
 .actions-row a.btn-blue,.actions-row a.btn-green{display:inline-flex;text-align:center}
+
+/* V5.7.1 Telegram Fix */
+.tg-settings-grid label{display:block;padding:10px 0;font-weight:800;font-size:18px}
+#telegramPersonalSec input[type="checkbox"]{width:26px;height:26px;vertical-align:middle;margin-right:10px}
+#telegramPersonalSec .dashboard-box{min-height:95px}

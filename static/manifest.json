@@ -1,7 +1,7 @@
 {
-  "name": "Банк крові V5.7",
-  "short_name": "Банк крові V5.7",
-  "start_url": "/?v=5.7",
+  "name": "Банк крові V5.7.1",
+  "short_name": "Банк крові V5.7.1",
+  "start_url": "/?v=5.7.1",
   "display": "standalone",
   "background_color": "#f6f7fb",
   "theme_color": "#b91c1c",

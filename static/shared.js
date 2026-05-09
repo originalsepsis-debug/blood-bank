@@ -380,7 +380,7 @@ async function loadTelegramMe(){
     else{a.href='#'; a.style.display='none'}
   }
   box.innerHTML=`<div class="dashboard-grid">
-    <div class="dashboard-box"><b>Bot</b><br>${d.bot_username?'@'+d.bot_username:'⚠️ TELEGRAM_BOT_USERNAME не вказано'}</div>
+    <div class="dashboard-box"><b>Bot</b><br>${d.bot_username?'@'+d.bot_username:'⚠️ Додай TELEGRAM_BOT_USERNAME в Render'}</div>
     <div class="dashboard-box"><b>Chat ID</b><br>${d.telegram_chat_id||'не підключено'}</div>
     <div class="dashboard-box"><b>Username</b><br>${d.telegram_username||'—'}</div>
     <div class="dashboard-box"><b>Статус</b><br>${d.telegram_enabled?'✅ Увімкнено':'⚠️ Вимкнено'}</div>
@@ -404,7 +404,8 @@ async function saveTelegramMeSettings(){
     reactions:get('tg_set_reactions'),
     backups:get('tg_set_backups')
   });
-  toast(r.ok?'✅ Telegram налаштування збережено':(r.error||'Помилка'),'good');
+  if(r.ok){toast('✅ Telegram налаштування збережено','good')}
+  else{toast('⚠️ '+(r.error||'Не вдалося зберегти Telegram налаштування'),'warn')}
   loadTelegramMe();
 }
 async function testMyTelegram(){
@@ -484,7 +485,7 @@ async function loadTelegramMe(){
     else{a.href='#'; a.style.display='none'}
   }
   box.innerHTML=`<div class="dashboard-grid">
-    <div class="dashboard-box"><b>Bot</b><br>${d.bot_username?'@'+d.bot_username:'⚠️ TELEGRAM_BOT_USERNAME не вказано'}</div>
+    <div class="dashboard-box"><b>Bot</b><br>${d.bot_username?'@'+d.bot_username:'⚠️ Додай TELEGRAM_BOT_USERNAME в Render'}</div>
     <div class="dashboard-box"><b>Chat ID</b><br>${d.telegram_chat_id||'не підключено'}</div>
     <div class="dashboard-box"><b>Username</b><br>${d.telegram_username||'—'}</div>
     <div class="dashboard-box"><b>Статус</b><br>${d.telegram_enabled?'✅ Увімкнено':'⚠️ Вимкнено'}</div>
