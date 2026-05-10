@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.9.2"
+APP_TITLE = "Банк крові V5.9.3"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -844,6 +844,9 @@ def ensure_telegram_user_columns_safe():
 
 @app.before_request
 def before():
+    # V593_PUBLIC_EMERGENCY_PATHS
+    if request.path in ["/api/health-debug","/api/emergency-db-fix","/api/public-health"]:
+        return None
     # V592_CSRF_EXEMPT_SECURITY_LOGIN_ATTEMPT
     if request.path == "/api/security/login-attempt":
         return None
@@ -919,6 +922,12 @@ def index():
 
 @app.post("/login")
 def login():
+    # V593_LOGIN_SAFE_START
+    try:
+        v593_fix_all_known_migrations()
+    except Exception as e:
+        try: print("V593_LOGIN_MIGRATION_ERROR:", e)
+        except Exception: pass
     # V572_SAFE_LOGIN
     try:
         safe_startup_check()
@@ -1579,7 +1588,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.2")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.3")
 
 
 @app.get("/api/telegram/status")
@@ -1861,16 +1870,15 @@ def ensure_login_attempts_columns_v592():
 
 @app.get("/api/health-debug")
 def api_health_debug():
-    out={"ok":False,"version":"V5.7.2"}
+    out={"ok":False,"version":"V5.9.3"}
     try:
-        out["select"]=row("SELECT 1 AS ok")
-        out["migrations"]=safe_startup_check()
+        out["db_select"]=row("SELECT 1 AS ok")
+        out["migrations"]=v593_fix_all_known_migrations()
         out["admins"]=len(rows("SELECT id FROM users WHERE role='admin' AND active=1"))
         out["ok"]=True
     except Exception as e:
         out["error"]=str(e)
     return jsonify(out), (200 if out.get("ok") else 500)
-
 
 @app.errorhandler(500)
 def v572_error_page(e):
@@ -2279,6 +2287,106 @@ def api_security_login_attempt_test():
         return jsonify(ok=True, count=len(rows("SELECT id FROM login_attempts LIMIT 5")))
     except Exception as e:
         return jsonify(ok=False,error=str(e)),500
+
+
+# ================= V5.9.3 EMERGENCY HEALTH / DB FIX =================
+def v593_safe_exec(sql, params=()):
+    try:
+        execute(sql, params)
+        return True, ""
+    except Exception as e:
+        return False, str(e)
+
+def v593_fix_all_known_migrations():
+    """
+    Safe public emergency migration for old Render PostgreSQL/SQLite schemas.
+    Does not require login. Does not expose secrets.
+    """
+    errors=[]
+    try:
+        init_db()
+    except Exception as e:
+        errors.append("init_db:"+str(e))
+
+    for fn_name in [
+        "ensure_telegram_user_columns_safe",
+        "ensure_traceability_tables",
+        "ensure_v59_tables",
+        "ensure_login_attempts_columns_v592",
+        "ensure_default_admin"
+    ]:
+        try:
+            fn=globals().get(fn_name)
+            if fn:
+                fn()
+        except Exception as e:
+            errors.append(fn_name+":"+str(e))
+
+    # Extra defensive columns for known tables
+    table_cols = {
+        "login_attempts": [
+            ("created_at","TEXT"),("username","TEXT"),("ip_address","TEXT"),("ok","INTEGER"),("user_agent","TEXT")
+        ],
+        "users": [
+            ("telegram_chat_id","TEXT"),("telegram_username","TEXT"),("telegram_enabled","INTEGER"),
+            ("telegram_notify_new_requests","INTEGER"),("telegram_notify_critical","INTEGER"),
+            ("telegram_notify_expiring","INTEGER"),("telegram_notify_reactions","INTEGER"),("telegram_notify_backups","INTEGER")
+        ],
+        "fridge_temperature_log": [
+            ("fridge_name","TEXT"),("temperature","REAL"),("entered_by","TEXT"),("created_at","TEXT"),("alert_triggered","INTEGER"),("notes","TEXT")
+        ],
+        "component_writeoffs": [
+            ("created_at","TEXT"),("package_code","TEXT"),("component","TEXT"),("amount","REAL"),("reason","TEXT"),("written_by","TEXT"),("notes","TEXT")
+        ],
+        "daily_reports": [
+            ("created_at","TEXT"),("report_type","TEXT"),("report_text","TEXT"),("sent_telegram","INTEGER")
+        ],
+        "incompatibility_log": [
+            ("created_at","TEXT"),("request_id","INTEGER"),("patient_name","TEXT"),("patient_group","TEXT"),("patient_rh","TEXT"),
+            ("donor_group","TEXT"),("donor_rh","TEXT"),("component","TEXT"),("reason","TEXT"),("override_used","INTEGER"),
+            ("issued_by","TEXT"),("workstation","TEXT"),("ip_address","TEXT"),("notes","TEXT")
+        ],
+        "package_traceability": [
+            ("package_code","TEXT"),("action_type","TEXT"),("patient_name","TEXT"),("request_id","INTEGER"),("user_name","TEXT"),
+            ("department","TEXT"),("created_at","TEXT"),("notes","TEXT")
+        ]
+    }
+    for table, cols in table_cols.items():
+        for col, typ in cols:
+            ok, err = v593_safe_exec(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
+            # duplicate column is expected, ignore all ALTER errors
+            pass
+
+    try:
+        safe_startup_check()
+    except Exception as e:
+        errors.append("safe_startup_check:"+str(e))
+
+    return errors
+
+@app.get("/api/public-health")
+def api_public_health_v593():
+    out={"ok":False,"version":"V5.9.3"}
+    try:
+        out["db_select"]=row("SELECT 1 AS ok")
+        out["migrations"]=v593_fix_all_known_migrations()
+        out["admins"]=len(rows("SELECT id FROM users WHERE role='admin' AND active=1"))
+        out["ok"]=True
+    except Exception as e:
+        out["error"]=str(e)
+    return jsonify(out), (200 if out.get("ok") else 500)
+
+@app.get("/api/emergency-db-fix")
+def api_emergency_db_fix_v593():
+    out={"ok":False,"version":"V5.9.3"}
+    try:
+        out["migrations"]=v593_fix_all_known_migrations()
+        out["admins"]=len(rows("SELECT id FROM users WHERE role='admin' AND active=1"))
+        out["ok"]=True
+    except Exception as e:
+        out["error"]=str(e)
+    return jsonify(out), (200 if out.get("ok") else 500)
+# ================= END V5.9.3 EMERGENCY HEALTH / DB FIX =================
 
 @app.get("/manifest.json")
 def manifest():
