@@ -708,3 +708,61 @@ async function roleCleanApply(){
   }
 }
 document.addEventListener('DOMContentLoaded',()=>setTimeout(roleCleanApply,800));
+
+
+// V5.9.7 Dual Interface
+function getSavedInterfaceMode(){
+  return localStorage.getItem('bloodBankInterfaceMode') || 'classic';
+}
+function setInterfaceMode(mode){
+  localStorage.setItem('bloodBankInterfaceMode',mode);
+  applyInterfaceMode();
+}
+function toggleSecondaryInterface(){
+  const current=getSavedInterfaceMode();
+  setInterfaceMode(current==='secondary'?'classic':'secondary');
+}
+function applyInterfaceMode(){
+  const mode=getSavedInterfaceMode();
+  const sec=document.getElementById('secondaryInterfaceSec');
+  const btn=document.getElementById('interfaceToggleBtn');
+  if(!sec)return;
+  if(mode==='secondary'){
+    sec.classList.remove('role-hidden');
+    document.body.classList.add('secondary-mode');
+    if(btn)btn.innerText='↩️ Класичний інтерфейс';
+  }else{
+    sec.classList.add('role-hidden');
+    document.body.classList.remove('secondary-mode');
+    if(btn)btn.innerText='🎨 Новий інтерфейс';
+  }
+  applySecondaryRoleVisibility();
+}
+async function applySecondaryRoleVisibility(){
+  let role=document.body.getAttribute('data-role')||'';
+  try{
+    let cfg=await jget('/api/ui/role-config');
+    if(cfg&&cfg.ok&&cfg.role)role=cfg.role;
+  }catch(e){}
+  document.body.setAttribute('data-role',role||'unknown');
+  document.querySelectorAll('.role-ui-shell').forEach(x=>x.classList.add('role-hidden'));
+  if(['admin','transfusion'].includes(role)){
+    document.querySelector('.role-ui-admin')?.classList.remove('role-hidden');
+  }else if(role==='doctor'){
+    document.querySelector('.role-ui-doctor')?.classList.remove('role-hidden');
+  }else if(role==='nurse'){
+    document.querySelector('.role-ui-nurse')?.classList.remove('role-hidden');
+  }
+}
+async function loadSecondaryQuickInfo(){
+  try{
+    let d=await jget('/api/dashboard/pro');
+    let s=document.getElementById('secDoctorStock');
+    let r=document.getElementById('secDoctorReq');
+    if(s)s.innerText=d.stock_items||0;
+    if(r)r.innerText=d.active_requests||0;
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{applyInterfaceMode();loadSecondaryQuickInfo();},1000);
+});

@@ -309,3 +309,155 @@ body[data-role="doctor"] .card,body[data-role="doctor"] .section{border-top:4px 
 body[data-role="nurse"] .card,body[data-role="nurse"] .section{border-top:4px solid rgba(126,34,206,.28)}
 body[data-role="admin"] .card,body[data-role="transfusion"] .card{border-top:4px solid rgba(37,99,235,.22)}
 @media(max-width:700px){.audit-action,a[href*="audit/export"]{width:calc(50% - 16px)!important;font-size:16px!important}.actions-row{display:flex;flex-wrap:wrap;gap:10px}}
+
+
+/* V5.9.7 Dual Interface */
+.interface-switch-wrap{
+  padding:10px 18px;
+  display:flex;
+  justify-content:flex-end;
+}
+#interfaceToggleBtn{
+  border-radius:20px;
+  font-weight:1000;
+  padding:12px 18px;
+}
+.secondary-ui{
+  padding:12px;
+}
+.secondary-title{
+  text-align:center;
+  margin:10px 0 22px;
+}
+.secondary-title h2{
+  font-size:28px;
+  margin:0;
+  color:#0f172a;
+}
+.secondary-title p{
+  color:#475569;
+  font-weight:800;
+}
+.role-ui-shell{
+  background:#fff;
+  border:1px solid #dbe3ef;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 18px 50px rgba(15,23,42,.08);
+  margin:0 auto 22px;
+  max-width:980px;
+}
+.role-ui-topbar{
+  min-height:58px;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  font-weight:900;
+  font-size:18px;
+}
+.role-ui-admin .role-ui-topbar{background:linear-gradient(90deg,#2563eb,#1d4ed8)}
+.role-ui-doctor .role-ui-topbar{background:linear-gradient(90deg,#16a34a,#15803d)}
+.role-ui-nurse .role-ui-topbar{background:linear-gradient(90deg,#7e22ce,#9333ea)}
+.role-ui-content{
+  padding:22px;
+}
+.role-ui-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+}
+.role-ui-card{
+  border:1px solid #e5e7eb;
+  border-radius:16px;
+  padding:16px;
+  min-height:110px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  font-size:18px;
+}
+.role-ui-card b{font-size:18px}
+.role-ui-actions{
+  margin-top:18px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.role-ui-actions button,
+.role-ui-actions a{
+  border:0;
+  border-radius:14px;
+  padding:14px 18px;
+  color:#fff;
+  background:#2563eb;
+  text-decoration:none;
+  font-weight:1000;
+  font-size:16px;
+}
+.role-ui-actions button:nth-child(2){background:#16a34a}
+.role-ui-actions button:nth-child(3){background:#f59e0b}
+.role-ui-actions a:nth-of-type(2){background:#16a34a}
+.role-ui-tiles{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+.role-ui-tiles button{
+  min-height:135px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:18px;
+  font-size:42px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  justify-content:center;
+  color:#0f172a;
+  font-weight:1000;
+}
+.role-ui-doctor .role-ui-tiles button{color:#15803d}
+.role-ui-nurse .role-ui-tiles button{color:#7e22ce}
+.role-ui-tiles b{
+  font-size:17px;
+  color:#0f172a;
+}
+.quick-info{
+  margin-top:18px;
+  padding:18px;
+  border-radius:18px;
+  background:#ecfdf5;
+  border:1px solid #bbf7d0;
+}
+.quick-info div{
+  display:flex;
+  justify-content:space-between;
+  margin-top:12px;
+}
+.quick-info strong{
+  background:#dcfce7;
+  padding:6px 18px;
+  border-radius:12px;
+}
+body.secondary-mode main > section:not(#secondaryInterfaceSec){
+  display:none;
+}
+body.secondary-mode #secondaryInterfaceSec{
+  display:block!important;
+}
+@media(max-width:760px){
+  .role-ui-grid,.role-ui-tiles{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .role-ui-card{
+    min-height:95px;
+    font-size:16px;
+  }
+  .role-ui-tiles button{
+    min-height:120px;
+    font-size:34px;
+  }
+  .secondary-title h2{font-size:22px}
+}

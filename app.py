@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.9.6"
+APP_TITLE = "Банк крові V5.9.7"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -1630,7 +1630,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.6")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.7")
 
 
 @app.get("/api/telegram/status")
