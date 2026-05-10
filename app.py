@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.9.4"
+APP_TITLE = "Банк крові V5.9.5"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -66,6 +66,7 @@ def db():
             if psycopg2 is None:
                 raise RuntimeError("psycopg2-binary is required for PostgreSQL")
             g.db = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+            g.db.autocommit = True  # V5.9.5: prevent InFailedSqlTransaction after migration errors
         else:
             g.db = sqlite3.connect(DB_PATH)
             g.db.row_factory = sqlite3.Row
@@ -83,47 +84,62 @@ def sql_convert(sql):
     return sql
 
 
-# ================= V5.9.4 POSTGRES TRANSACTION RECOVERY =================
+# ================= V5.9.5 REAL POSTGRES TRANSACTION RECOVERY =================
 def db_rollback_safe():
     try:
-        conn = get_db()
-        conn.rollback()
+        db().rollback()
     except Exception:
         pass
 
 def db_commit_safe():
     try:
-        conn = get_db()
-        conn.commit()
+        if not IS_POSTGRES:
+            db().commit()
     except Exception:
         pass
-# ================= END V5.9.4 POSTGRES TRANSACTION RECOVERY =================
+# ================= END V5.9.5 REAL POSTGRES TRANSACTION RECOVERY =================
 
 def execute(sql, params=()):
-    if IS_POSTGRES:
-        cur = db().cursor()
+    conn = db()
+    try:
+        cur = conn.cursor()
         cur.execute(sql_convert(sql), params)
-        db().commit()
+        if not IS_POSTGRES:
+            conn.commit()
         return cur
-    cur = db().execute(sql, params)
-    db().commit()
-    return cur
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise
 
 def rows(sql, params=()):
-    if IS_POSTGRES:
-        cur = db().cursor()
+    conn = db()
+    try:
+        cur = conn.cursor()
         cur.execute(sql_convert(sql), params)
         return [dict(x) for x in cur.fetchall()]
-    return [dict(x) for x in db().execute(sql, params).fetchall()]
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise
 
 def row(sql, params=()):
-    if IS_POSTGRES:
-        cur = db().cursor()
+    conn = db()
+    try:
+        cur = conn.cursor()
         cur.execute(sql_convert(sql), params)
         r = cur.fetchone()
         return dict(r) if r else None
-    r = db().execute(sql, params).fetchone()
-    return dict(r) if r else None
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise
 
 def hash_password(password, salt=None):
     salt = salt or secrets.token_hex(16)
@@ -943,6 +959,8 @@ def index():
 
 @app.post("/login")
 def login():
+    # V595_LOGIN_ROLLBACK_BEFORE_SELECT
+    db_rollback_safe()
     # V594_LOGIN_ROLLBACK_BEFORE_SELECT
     db_rollback_safe()
     # V593_LOGIN_SAFE_START
@@ -1612,7 +1630,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.4")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.5")
 
 
 @app.get("/api/telegram/status")
@@ -2419,7 +2437,7 @@ def api_emergency_db_fix_v593():
 @app.get("/api/tx-reset")
 def api_tx_reset_v594():
     db_rollback_safe()
-    return jsonify(ok=True, version="V5.9.4", message="transaction rolled back")
+    return jsonify(ok=True, version="V5.9.5", message="transaction rolled back")
 
 @app.get("/manifest.json")
 def manifest():
