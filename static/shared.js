@@ -766,3 +766,84 @@ async function loadSecondaryQuickInfo(){
 document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(()=>{applyInterfaceMode();loadSecondaryQuickInfo();},1000);
 });
+
+
+// V5.9.8 Functional Secondary Interface Router
+const ROLE_FEATURE_TARGETS = {
+  monitor: ['monitorSec','healthSec','dashboardProSec'],
+  maintenance: ['monitorSec','settingsSec','backupSec'],
+  audit: ['auditSec','monitorSec','reportsSec'],
+  patient: ['patientSec','patientsSec','historySec','requestSec','requestsSec'],
+  patients: ['patientSec','patientsSec','historySec'],
+  request: ['requestSec','requestsSec','createRequestSec','doctorRequestSec'],
+  myRequests: ['myRequestsSec','requestsSec','requestSec'],
+  history: ['historySec','patientHistorySec','patientsSec','patientSec'],
+  donors: ['donorsSec','donorSec','patientsSec'],
+  barcode: ['barcodeSec','qrSec','scanSec'],
+  stock: ['stockSec','warehouseSec','dashboardProSec'],
+  dashboardPro: ['dashboardProSec','dashboardSec','mainSec'],
+  temperature: ['temperatureSec','fridgeSec','monitorSec'],
+  reactions: ['reactionsSec','reactionSec','requestsSec'],
+  journal: ['journalSec','transfusionJournalSec','requestsSec'],
+  telegram: ['telegramPersonalSec','telegramSec'],
+  pwa: ['pwaInstallSec','pwaSec'],
+  users: ['usersSec','userSec'],
+  reports: ['reportsSec','reportSec']
+};
+function findExistingSection(feature){
+  const candidates = ROLE_FEATURE_TARGETS[feature] || [feature+'Sec'];
+  for(const id of candidates){
+    const el=document.getElementById(id);
+    if(el) return id;
+  }
+  const all=[...document.querySelectorAll('section[id], .section[id]')];
+  const f=(feature||'').toLowerCase();
+  const byId=all.find(x=>(x.id||'').toLowerCase().includes(f));
+  if(byId) return byId.id;
+  const keywords={
+    patient:['пацієнт','пациент','patient'],
+    request:['вимог','замовл','request'],
+    myRequests:['мої','мої замовлення','my'],
+    history:['істор','history'],
+    donors:['донор','donor'],
+    barcode:['qr','barcode','штрих','скан'],
+    stock:['склад','stock','запас'],
+    temperature:['температур','холодиль'],
+    reactions:['реакц'],
+    journal:['журнал'],
+    monitor:['монітор','health','система'],
+    reports:['звіт','report']
+  };
+  const words=keywords[feature]||[f];
+  const byText=all.find(x=>{
+    const txt=(x.innerText||'').toLowerCase();
+    return words.some(w=>txt.includes(w));
+  });
+  return byText ? byText.id : null;
+}
+function openRoleFeature(feature){
+  const id=findExistingSection(feature);
+  if(id){
+    try{ setInterfaceMode('classic'); }catch(e){}
+    setTimeout(()=>{
+      if(typeof show==='function') show(id);
+      else {
+        document.querySelectorAll('.section, section[id]').forEach(s=>s.style.display='none');
+        const el=document.getElementById(id);
+        if(el)el.style.display='block';
+      }
+      const el=document.getElementById(id);
+      if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    },100);
+    return true;
+  }
+  toast('⚠️ Розділ ще не знайдено або недоступний для ролі','warn');
+  return false;
+}
+function enhanceSecondaryButtons(){
+  document.querySelectorAll('#secondaryInterfaceSec button[data-feature]').forEach(btn=>{
+    const f=btn.getAttribute('data-feature');
+    btn.onclick=()=>openRoleFeature(f);
+  });
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(enhanceSecondaryButtons,1200));

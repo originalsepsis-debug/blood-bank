@@ -1,8 +1,8 @@
-<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V5.9.7</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a>
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V5.9.8</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a>
 <div class="interface-switch-wrap">
   <button id="interfaceToggleBtn" class="btn-blue" onclick="toggleSecondaryInterface()">🎨 Новий інтерфейс</button>
 </div>
-</header><main class="container"><div id="offlineStatus" class="notice hidden"></div><section class="stats"><div class="stat red">Еритроцитарні компоненти <b id="rbcStat">0</b></div><div class="stat yellow">Плазма <b id="plasmaStat">0</b></div><div class="stat blue">Тромбоцити <b id="pltStat">0</b></div><div class="stat purple">Кріопреципітат <b id="cryoStat">0</b></div><div class="stat dark">Критичні залишки <b id="lowStat">0</b></div></section><nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button onclick="show('stockSec')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button onclick="show('patientsSec')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram система</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('pwaInstallSec')">PWA</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button><button onclick="show('barcodeSec')">QR/Barcode</button><button onclick="show('traceabilitySec')">Traceability</button><button onclick="show('incompatSec')">Несумісності</button><button onclick="show('dashboardProSec')">Dashboard PRO</button><button onclick="show('temperatureSec')">Температура</button><button onclick="show('writeoffSec')">Списання</button><button onclick="show('dailyReportSec')">Добові звіти</button></nav><section id="requestsSec" class="card section active"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid"><input id="patient_name" placeholder="ПІБ пацієнта"><input id="birth_date" type="date"><input id="address" placeholder="Адреса"><input id="patient_status" placeholder="Статус пацієнта"><input id="department" placeholder="Відділення"><select id="component">
+</header><main class="container"><div id="offlineStatus" class="notice hidden"></div><section class="stats"><div class="stat red">Еритроцитарні компоненти <b id="rbcStat">0</b></div><div class="stat yellow">Плазма <b id="plasmaStat">0</b></div><div class="stat blue">Тромбоцити <b id="pltStat">0</b></div><div class="stat purple">Кріопреципітат <b id="cryoStat">0</b></div><div class="stat dark">Критичні залишки <b id="lowStat">0</b></div></section><nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button data-feature="stock" onclick="openRoleFeature('stock')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button data-feature="patient" onclick="openRoleFeature('patient')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram система</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('pwaInstallSec')">PWA</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button><button data-feature="barcode" onclick="openRoleFeature('barcode')">QR/Barcode</button><button onclick="show('traceabilitySec')">Traceability</button><button onclick="show('incompatSec')">Несумісності</button><button data-feature="dashboardPro" onclick="openRoleFeature('dashboardPro')">Dashboard PRO</button><button data-feature="temperature" onclick="openRoleFeature('temperature')">Температура</button><button onclick="show('writeoffSec')">Списання</button><button onclick="show('dailyReportSec')">Добові звіти</button></nav><section id="requestsSec" class="card section active"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid"><input id="patient_name" placeholder="ПІБ пацієнта"><input id="birth_date" type="date"><input id="address" placeholder="Адреса"><input id="patient_status" placeholder="Статус пацієнта"><input id="department" placeholder="Відділення"><select id="component">
 <option value="">Виберіть компонент</option>
 <option>Еритроцитарні компоненти</option>
 <option>Плазма</option>
@@ -250,9 +250,9 @@ PWA відкриває сайт як окремий додаток без адр
         <div class="role-ui-card">✈️<b>Telegram</b><span>✅ Налаштовано</span></div>
       </div>
       <div class="role-ui-actions">
-        <button onclick="show('monitorSec')">💙 Health check</button>
-        <button onclick="show('monitorSec')">🔧 Maintenance</button>
-        <button onclick="show('monitorSec')">↩️ Rollback snapshot</button>
+        <button onclick="openRoleFeature('monitor')">💙 Health check</button>
+        <button onclick="openRoleFeature('monitor')">🔧 Maintenance</button>
+        <button onclick="openRoleFeature('monitor')">↩️ Rollback snapshot</button>
         <a href="/api/audit/export/xlsx">📄 Аудити XLSX</a>
         <a href="/api/audit/export/csv">📄 Аудити CSV</a>
       </div>
@@ -266,10 +266,10 @@ PWA відкриває сайт як окремий додаток без адр
     <div class="role-ui-content">
       <h3>Вітаємо, Доктор!</h3>
       <div class="role-ui-tiles">
-        <button onclick="show('patientsSec')">🔎<b>Пошук пацієнта</b></button>
-        <button onclick="show('requestSec')">💧<b>Замовлення крові</b></button>
-        <button onclick="show('myRequestsSec')">📋<b>Мої замовлення</b></button>
-        <button onclick="show('historySec')">📄<b>Історія пацієнта</b></button>
+        <button data-feature="patient" onclick="openRoleFeature('patient')">🔎<b>Пошук пацієнта</b></button>
+        <button data-feature="request" onclick="openRoleFeature('request')">💧<b>Замовлення крові</b></button>
+        <button data-feature="myRequests" onclick="openRoleFeature('myRequests')">📋<b>Мої замовлення</b></button>
+        <button data-feature="history" onclick="openRoleFeature('history')">📄<b>Історія пацієнта</b></button>
       </div>
       <div class="quick-info">
         <b>Швидка інформація</b>
@@ -286,12 +286,12 @@ PWA відкриває сайт як окремий додаток без адр
     <div class="role-ui-content">
       <h3>Вітаємо, Медсестра!</h3>
       <div class="role-ui-tiles">
-        <button onclick="show('donorsSec')">👤<b>Реєстрація донора</b></button>
-        <button onclick="show('barcodeSec')">💧<b>Забір / QR</b></button>
-        <button onclick="show('donorsSec')">👥<b>Мої донори</b></button>
-        <button onclick="show('temperatureSec')">📋<b>Журнал заборів</b></button>
-        <button onclick="show('stockSec')">📦<b>Склад</b></button>
-        <button onclick="show('dashboardProSec')">📊<b>Запаси</b></button>
+        <button data-feature="donors" onclick="openRoleFeature('donors')">👤<b>Реєстрація донора</b></button>
+        <button data-feature="barcode" onclick="openRoleFeature('barcode')">💧<b>Забір / QR</b></button>
+        <button data-feature="donors" onclick="openRoleFeature('donors')">👥<b>Мої донори</b></button>
+        <button data-feature="temperature" onclick="openRoleFeature('temperature')">📋<b>Журнал заборів</b></button>
+        <button data-feature="stock" onclick="openRoleFeature('stock')">📦<b>Склад</b></button>
+        <button data-feature="dashboardPro" onclick="openRoleFeature('dashboardPro')">📊<b>Запаси</b></button>
       </div>
     </div>
   </div>

@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.9.7"
+APP_TITLE = "Банк крові V5.9.8"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -1630,7 +1630,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.7")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.8")
 
 
 @app.get("/api/telegram/status")
@@ -2454,6 +2454,22 @@ def api_ui_role_config():
     else:
         allowed=["dashboard","requests"]
     return jsonify(ok=True, role=role, allowed=allowed)
+
+
+@app.get("/api/ui/feature-map")
+@login_required
+def api_ui_feature_map():
+    return jsonify(ok=True, version="V5.9.8", features={
+        "patient":["patientSec","patientsSec","historySec","requestSec","requestsSec"],
+        "request":["requestSec","requestsSec","createRequestSec","doctorRequestSec"],
+        "myRequests":["myRequestsSec","requestsSec","requestSec"],
+        "history":["historySec","patientHistorySec","patientsSec"],
+        "barcode":["barcodeSec","qrSec","scanSec"],
+        "stock":["stockSec","warehouseSec","dashboardProSec"],
+        "temperature":["temperatureSec","fridgeSec"],
+        "monitor":["monitorSec","healthSec","dashboardProSec"],
+        "audit":["auditSec","monitorSec","reportsSec"]
+    })
 
 @app.get("/manifest.json")
 def manifest():

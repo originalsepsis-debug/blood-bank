@@ -461,3 +461,25 @@ body.secondary-mode #secondaryInterfaceSec{
   }
   .secondary-title h2{font-size:22px}
 }
+
+
+/* V5.9.8 Functional Fix */
+.role-ui-tiles button{
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.role-ui-tiles button:active{
+  transform:scale(.98);
+}
+.role-ui-tiles button:hover{
+  box-shadow:0 16px 34px rgba(15,23,42,.12);
+  border-color:#93c5fd;
+}
+.role-ui-actions button,.role-ui-actions a{
+  cursor:pointer;
+}
+.secondary-ui .route-hint{
+  font-size:12px;
+  color:#64748b;
+  margin-top:4px;
+}
