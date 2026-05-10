@@ -1,0 +1,16 @@
+BLOOD BANK V5.9.7 DUAL INTERFACE REPORT
+================================================================================
+
+[OK] Python compile — 
+[OK] shared.js syntax — OK
+[OK] service-worker syntax — OK
+[OK] secondary interface section — 
+[OK] toggle button — 
+[OK] dual interface JS — 
+[OK] dual interface CSS — 
+[OK] role visibility — 
+[OK] version — 
+[OK] runtime health — {'admins': 1, 'db_select': {'ok': 1}, 'migrations': [], 'ok': True, 'version': 'V5.9.3'}
+[OK] runtime login — 200
+
+Підсумок: 11/11 тестів успішно.

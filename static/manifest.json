@@ -1,0 +1,17 @@
+{
+  "name": "Банк крові V6.0.1",
+  "short_name": "BloodBank V6",
+  "start_url": "/?v=6.0.1",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#b91c1c",
+  "icons": [
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "description": "Система банку крові",
+  "scope": "/"
+}

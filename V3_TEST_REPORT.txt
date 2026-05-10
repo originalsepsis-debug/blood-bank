@@ -1,0 +1,21 @@
+BLOOD BANK V3 CLEAN FULL TEST REPORT
+================================================================================
+
+[OK] Python compile — 
+[OK] JavaScript syntax — OK
+[OK] PWA files present — 
+[OK] Login page — 200
+[OK] Admin first login — 200
+[OK] Dashboard renders — 200
+[OK] Create doctor — {'ok': True}
+[OK] Stock add expiry — {'ok': True}
+[OK] Alerts expiry/low — {'expiry': [{'amount': 2.0, 'component': 'Плазма свіжозаморожена', 'created_at': '2026-05-07 02:59:03', 'donor_group': 'AB', 'donor_rh': '+', 'expiry': '2020-01-01', 'id': 1, 'note': '', 'pack_no': '', 'patient_name': '', 'series': '', 'type': 'Надходження', 'user_id': 1}], 'low': [{'component': 'Плазма свіжозаморожена', 'group': 'AB', 'qty': 2.0, 'rh': '+'}]}
+[OK] Backup create — {'filename': 'blood_bank_backup_20260507_025903.db.zip', 'ok': True}
+[OK] Doctor request create — {'ok': True}
+[OK] Incompatible blocked — {'error': 'ABO несумісність: пацієнт A, донор B', 'ok': False}
+[OK] Compatible issue — {'ok': True}
+[OK] Dashboard API — {'components': [{'amount': 1.0, 'component': 'Еритроцити'}], 'departments': [{'count': 1, 'department': 'Хірургія'}], 'requests': [{'count': 1, 'status': 'Видано'}]}
+[OK] Patient history — {'rows': [{'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': '', 'component': 'Еритроцити', 'created_at': '2026-05-07 02:59:03', 'created_by': 2, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Лікар', 'doctor_position': '', 'donor_group': 'A', 'donor_rh': '+', 'expiry': '', 'id': 1, 'issued_at': '2026-05-07 02:59:03', 'issued_by': 'Адміністратор', 'note': '', 'pack_no': '', 'patient_group': 'A', 'patient_name': 'Пацієнт', 'patient_rh': '+', 'patient_status': '', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': '', 'status': 'Видано', 'urgency': 'Планово', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}]}
+[OK] Gunicorn startup — 
+
+Підсумок: 16/16 тестів успішно.

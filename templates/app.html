@@ -1,0 +1,296 @@
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V6.0.1</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a>
+<nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button data-feature="stock" onclick="openRoleFeature('stock')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button data-feature="patient" onclick="openRoleFeature('patient')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram система</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('pwaInstallSec')">PWA</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button><button data-feature="barcode" onclick="openRoleFeature('barcode')">QR/Barcode</button><button onclick="show('traceabilitySec')">Traceability</button><button onclick="show('incompatSec')">Несумісності</button><button data-feature="dashboardPro" onclick="openRoleFeature('dashboardPro')">Dashboard PRO</button><button data-feature="temperature" onclick="openRoleFeature('temperature')">Температура</button><button onclick="show('writeoffSec')">Списання</button><button onclick="show('dailyReportSec')">Добові звіти</button></nav><section id="requestsSec" class="card section active"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid"><input id="patient_name" placeholder="ПІБ пацієнта"><input id="birth_date" type="date"><input id="address" placeholder="Адреса"><input id="patient_status" placeholder="Статус пацієнта"><input id="department" placeholder="Відділення"><select id="component">
+<option value="">Виберіть компонент</option>
+<option>Еритроцитарні компоненти</option>
+<option>Плазма</option>
+<option>Тромбоцити</option>
+<option>Кріопреципітат</option>
+</select><select id="patient_group">
+<option value="">Виберіть групу</option>
+<option>O(I)</option>
+<option>A(II)</option>
+<option>B(III)</option>
+<option>AB(IV)</option>
+</select><select id="patient_rh">
+<option value="">Виберіть Rh</option>
+<option>Rh+</option>
+<option>Rh-</option>
+</select><input id="amount" type="number" step="0.1" placeholder="Кількість"><input id="urgency" placeholder="Терміновість"><input id="diagnosis" placeholder="Діагноз"><input id="note" placeholder="Примітка"></div><button class="btn-green" onclick="createRequest()">Створити вимогу</button>{% endif %}<div class="request-tabs">
+<button class="req-tab active" onclick="setRequestTab('active', this)">Активні</button>
+<button class="req-tab" onclick="setRequestTab('used', this)">Використані</button>
+<button class="req-tab" onclick="setRequestTab('written', this)">Списані</button>
+<button class="req-tab" onclick="setRequestTab('rejected', this)">Відмовлені</button>
+</div>
+<div id="reminders"></div><div id="requests"></div></section><section id="stockSec" class="card section"><h2>Склад</h2>{% if user.role in ['admin','transfusion'] %}<div class="form-grid"><select id="stock_type"><option>Надходження</option><option>Списання</option></select><select id="stock_component">
+<option value="">Виберіть компонент</option>
+<option>Еритроцитарні компоненти</option>
+<option>Плазма</option>
+<option>Тромбоцити</option>
+<option>Кріопреципітат</option>
+</select><select id="stock_group">
+<option value="">Виберіть групу</option>
+<option>O(I)</option>
+<option>A(II)</option>
+<option>B(III)</option>
+<option>AB(IV)</option>
+</select><select id="stock_rh">
+<option value="">Виберіть Rh</option>
+<option>Rh+</option>
+<option>Rh-</option>
+</select><input id="stock_amount" type="number" placeholder="Кількість"><input id="pack_no" placeholder="№ пакета"><input id="qr_code" placeholder="QR/Barcode"><button type="button" id="scanQrBtn" onclick="openQrScanner()">📷 Сканувати</button><input id="series" placeholder="Серія"><input id="expiry" type="date"></div><button class="btn-green" onclick="saveStock()">Додати</button>{% endif %}<div id="stock"></div></section><section id="alertsSec" class="card section"><h2>Попередження</h2><div id="alerts"></div></section><section id="usersSec" class="card section"><h2>Користувачі</h2>{% if user.role in ['admin','transfusion'] %}<div class="form-grid"><input id="new_username" placeholder="Логін"><input id="new_password" type="password" placeholder="Пароль"><input id="new_full_name" placeholder="ПІБ"><input id="new_position" placeholder="Посада"><select id="new_role"><option>doctor</option><option>nurse</option><option>transfusion</option><option>admin</option></select></div><button class="btn-green" onclick="createUser()">Створити користувача</button><input id="usersSearch" oninput="renderUsersTable()" placeholder="Пошук">{% endif %}<div id="users"></div></section><section id="auditSec" class="card section"><h2>Журнал</h2><div id="audit"></div></section><section id="reportsSec" class="card section"><h2>Звіти</h2><button onclick="loadReport()">Попередній перегляд</button><button onclick="location.href='/reports/export/xlsx'">Excel</button><button onclick="location.href='/reports/export/pdf'">PDF</button><div id="reportPreview"></div></section><section id="trashSec" class="card section"><h2>Кошик</h2><div id="trash"></div></section>
+<section id="qrScannerSec" class="card section">
+<h2>QR / Barcode scanner</h2>
+<div class="notice">Працює в Chrome/Android через BarcodeDetector. На iPhone можна вводити код вручну.</div>
+<video id="qrVideo" class="qr-video" playsinline></video>
+<div id="qrResult"></div>
+<button class="btn-green" onclick="startQrScanner()">Старт сканера</button>
+<button class="btn-red" onclick="stopQrScanner()">Стоп</button>
+</section>
+
+<section id="reactionRegistrySec" class="card section">
+<h2>Реєстр реакцій</h2>
+<div class="form-grid">
+<input id="rx_request_id" placeholder="№ вимоги">
+<input id="rx_patient_name" placeholder="Пацієнт">
+<select id="rx_type"><option>Фебрильна</option><option>Алергічна</option><option>Гемолітична</option><option>Анафілаксія</option><option>TRALI</option><option>TACO</option></select>
+<select id="rx_severity"><option>Легка</option><option>Середня</option><option>Тяжка</option></select>
+<input id="rx_description" placeholder="Опис">
+<input id="rx_action" placeholder="Дії">
+<input id="rx_result" placeholder="Результат">
+</div>
+<button class="btn-red" onclick="saveReactionRegistry()">Зберегти реакцію</button>
+<div id="reactionRegistry"></div>
+</section>
+
+<section id="signSec" class="card section">
+<h2>Електронне підтвердження трансфузії</h2>
+<div class="form-grid">
+<input id="sign_request_id" placeholder="№ вимоги">
+<input id="sign_nurse" placeholder="Медсестра">
+<input id="sign_started" type="datetime-local">
+<input id="sign_finished" type="datetime-local">
+<input id="sign_result" placeholder="Результат">
+</div>
+<button class="btn-green" onclick="saveTransfusionEvent()">Підписати / підтвердити</button>
+<div id="transfusionEvents"></div>
+</section>
+
+
+<section id="telegramSec" class="card section">
+<h2>Telegram сповіщення</h2>
+<div class="notice">Додай у Render Environment Variables: <b>TELEGRAM_BOT_TOKEN</b> і <b>TELEGRAM_CHAT_ID</b>.</div>
+<div id="telegramStatus"></div>
+<div class="actions-row">
+<button class="btn-blue" onclick="loadTelegramStatus()">Оновити статус</button>
+<button class="btn-green" onclick="testTelegram()">Тест Telegram</button>
+<button class="btn-orange" onclick="retryTelegramQueue()">Повторити чергу</button>
+</div>
+<h3>Логи Telegram</h3>
+<div id="telegramLogs"></div>
+<h3>Черга Telegram</h3>
+<div id="telegramQueue"></div>
+</section>
+
+<section id="maintenanceSec" class="card section">
+<h2>Моніторинг / Production</h2>
+<div id="healthBox"></div>
+<div class="actions-row">
+<button class="btn-blue" onclick="loadHealth()">Health check</button>
+<button class="btn-green" onclick="runMaintenance()">Maintenance</button>
+<button class="btn-orange" onclick="createRollbackSnapshot()">Rollback snapshot</button>
+<a class="btn-blue" href="/api/audit/export/xlsx" class="audit-action audit-xlsx role-admin-only">📄 Audit XLSX</a>
+<a class="btn-blue" href="/api/audit/export/csv" class="audit-action audit-csv role-admin-only">📄 Audit CSV</a>
+</div>
+</section>
+
+
+<section id="pwaInstallSec" class="card section">
+<h2>Встановити додаток PWA</h2>
+<div class="notice">
+PWA відкриває сайт як окремий додаток без адресного рядка.
+</div>
+<div id="pwaStatusBox"></div>
+<div class="actions-row">
+<button id="pwaInstallBtn" class="btn-green" onclick="installPWA()">📲 Встановити додаток</button>
+<button class="btn-blue" onclick="showPWAHelp()">ℹ️ Інструкція</button>
+<button class="btn-orange" onclick="clearPWACache()">🔄 Оновити кеш</button>
+</div>
+<div id="pwaHelpBox" class="notice" style="display:none">
+<b>Android Chrome:</b> ⋮ → Встановити додаток.<br>
+<b>iPhone Safari:</b> Поділитись → На початковий екран.<br>
+Якщо кнопка не активна — браузер ще не дав дозвіл або додаток вже встановлено.
+</div>
+</section>
+
+<section id="telegramPersonalSec" class="card section">
+<h2>Мій Telegram</h2>
+<div class="notice">Натисніть «Підключити Telegram», відкрийте бота і натисніть START.</div>
+<div id="telegramMeBox"></div>
+<div class="actions-row">
+<a id="telegramConnectBtn" class="btn-green" href="#" target="_blank">🔗 Підключити Telegram</a>
+<button class="btn-blue" onclick="loadTelegramMe()">Оновити</button>
+<button class="btn-orange" onclick="testMyTelegram()">Тест мені</button>
+<button class="btn-blue" onclick="pollTelegram()">Синхронізувати START</button>
+</div>
+<h3>Які сповіщення отримувати</h3>
+<div class="tg-settings-grid">
+<label><input type="checkbox" id="tg_set_enabled"> Увімкнути персональні сповіщення</label>
+<label><input type="checkbox" id="tg_set_new_requests"> Нові вимоги</label>
+<label><input type="checkbox" id="tg_set_critical"> Критичні залишки</label>
+<label><input type="checkbox" id="tg_set_expiring"> Закінчення терміну</label>
+<label><input type="checkbox" id="tg_set_reactions"> Трансфузійні реакції</label>
+<label><input type="checkbox" id="tg_set_backups"> Backup</label>
+</div>
+<button class="btn-green" onclick="saveTelegramMeSettings()">Зберегти налаштування</button>
+<div class="notice">Команди бота: <b>/stock</b>, <b>/critical</b>, <b>/requests</b>, <b>/expiring</b></div>
+</section>
+
+<section id="barcodeSec" class="card section">
+<h2>QR / Barcode: склад → видача</h2>
+<div class="notice">Скануйте QR/штрихкод пакета. Для видачі вкажіть ID вимоги.</div>
+<video id="scannerVideo" playsinline style="width:100%;max-height:320px;border-radius:18px;background:#111"></video>
+<div class="actions-row">
+<button class="btn-green" onclick="startScanner()">▶ Запустити камеру</button>
+<button class="btn-orange" onclick="stopScanner()">■ Зупинити</button>
+</div>
+<div class="grid2">
+<input id="barcodeInput" placeholder="QR / Barcode пакета">
+<input id="barcodeRequestId" placeholder="ID вимоги">
+</div>
+<div class="actions-row">
+<button class="btn-blue" onclick="barcodeLookup()">Знайти пакет</button>
+<button class="btn-orange" onclick="barcodeIssueCheck()">Перевірити сумісність</button>
+<button class="btn-green" onclick="barcodeIssue()">Видати</button>
+</div>
+<div id="barcodeResult"></div>
+</section>
+
+<section id="traceabilitySec" class="card section">
+<h2>Traceability пакета</h2>
+<div class="grid2">
+<input id="traceCode" placeholder="QR / Barcode / номер пакета">
+<button class="btn-blue" onclick="loadTraceability()">Показати історію</button>
+</div>
+<div id="traceabilityResult"></div>
+</section>
+
+<section id="incompatSec" class="card section">
+<h2>Журнал несумісностей</h2>
+<div class="actions-row">
+<button class="btn-blue" onclick="loadIncompatibilities()">Оновити</button>
+</div>
+<div id="incompatibilityResult"></div>
+</section>
+
+<section id="dashboardProSec" class="card section">
+<h2>Dashboard PRO</h2>
+<div id="dashboardProBox"></div>
+<button class="btn-blue" onclick="loadDashboardPro()">Оновити</button>
+</section>
+
+<section id="temperatureSec" class="card section">
+<h2>Температурний журнал</h2>
+<div class="grid2">
+<input id="fridgeName" placeholder="Холодильник / морозильник">
+<input id="fridgeTemp" type="number" step="0.1" placeholder="Температура °C">
+</div>
+<input id="fridgeNotes" placeholder="Примітка">
+<button class="btn-green" onclick="saveTemperature()">Зберегти температуру</button>
+<div id="temperatureResult"></div>
+</section>
+
+<section id="writeoffSec" class="card section">
+<h2>Списання компонента</h2>
+<div class="grid2">
+<input id="writeoffCode" placeholder="QR / Barcode / номер пакета">
+<select id="writeoffReason">
+<option value="">Причина списання</option>
+<option>Прострочено</option>
+<option>Пошкоджено</option>
+<option>Гемоліз</option>
+<option>Повернуто невикористаним</option>
+<option>Порушення температурного режиму</option>
+<option>Інше</option>
+</select>
+</div>
+<input id="writeoffNotes" placeholder="Примітка">
+<button class="btn-orange" onclick="saveWriteoff()">Списати</button>
+<div id="writeoffResult"></div>
+</section>
+
+<section id="dailyReportSec" class="card section">
+<h2>Добові Telegram звіти</h2>
+<div class="actions-row">
+<button class="btn-green" onclick="sendDailyReport()">Надіслати добовий звіт</button>
+<button class="btn-blue" onclick="loadDailyReports()">Історія звітів</button>
+</div>
+<div id="dailyReportResult"></div>
+</section>
+
+
+<section id="" class="secondary-ui role-hidden">
+  <div class="secondary-title">
+    <h2>Рольовий інтерфейс — тільки потрібне</h2>
+    <p>Кожен користувач бачить лише свій функціонал ✅</p>
+  </div>
+
+  <div class="role-ui-shell role-ui-admin">
+    <div class="role-ui-topbar">
+      <span>☰</span><b>💧 Blood Bank</b><span>👤 <span class="roleLabel">Адміністратор</span></span>
+    </div>
+    <div class="role-ui-content">
+      <h3>Вітаємо, Адміністратор!</h3>
+      <div class="role-ui-grid">
+        <div class="role-ui-card">🖥️<b>Система</b><span>✅ OK<br>V5.9.7</span></div>
+        <div class="role-ui-card">🛢️<b>Database</b><span>PostgreSQL</span></div>
+        <div class="role-ui-card">☁️<b>Backup age</b><span>перевірка</span></div>
+        <div class="role-ui-card">✈️<b>Telegram</b><span>✅ Налаштовано</span></div>
+      </div>
+      <div class="role-ui-actions">
+        <button onclick="openRoleFeature('monitor')">💙 Health check</button>
+        <button onclick="openRoleFeature('monitor')">🔧 Maintenance</button>
+        <button onclick="openRoleFeature('monitor')">↩️ Rollback snapshot</button>
+        <a href="/api/audit/export/xlsx">📄 Аудити XLSX</a>
+        <a href="/api/audit/export/csv">📄 Аудити CSV</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="role-ui-shell role-ui-doctor">
+    <div class="role-ui-topbar">
+      <span>☰</span><b>💧 Blood Bank</b><span>👤 Доктор</span>
+    </div>
+    <div class="role-ui-content">
+      <h3>Вітаємо, Доктор!</h3>
+      <div class="role-ui-tiles">
+        <button data-feature="patient" onclick="openRoleFeature('patient')">🔎<b>Пошук пацієнта</b></button>
+        <button data-feature="request" onclick="openRoleFeature('request')">💧<b>Замовлення крові</b></button>
+        <button data-feature="myRequests" onclick="openRoleFeature('myRequests')">📋<b>Мої замовлення</b></button>
+        <button data-feature="history" onclick="openRoleFeature('history')">📄<b>Історія пацієнта</b></button>
+      </div>
+      <div class="quick-info">
+        <b>Швидка інформація</b>
+        <div><span>В наявності компонентів</span><strong id="secDoctorStock">—</strong></div>
+        <div><span>Активних замовлень</span><strong id="secDoctorReq">—</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="role-ui-shell role-ui-nurse">
+    <div class="role-ui-topbar">
+      <span>☰</span><b>💧 Blood Bank</b><span>👤 Медсестра</span>
+    </div>
+    <div class="role-ui-content">
+      <h3>Вітаємо, Медсестра!</h3>
+      <div class="role-ui-tiles">
+        <button data-feature="donors" onclick="openRoleFeature('donors')">👤<b>Реєстрація донора</b></button>
+        <button data-feature="barcode" onclick="openRoleFeature('barcode')">💧<b>Забір / QR</b></button>
+        <button data-feature="donors" onclick="openRoleFeature('donors')">👥<b>Мої донори</b></button>
+        <button data-feature="temperature" onclick="openRoleFeature('temperature')">📋<b>Журнал заборів</b></button>
+        <button data-feature="stock" onclick="openRoleFeature('stock')">📦<b>Склад</b></button>
+        <button data-feature="dashboardPro" onclick="openRoleFeature('dashboardPro')">📊<b>Запаси</b></button>
+      </div>
+    </div>
+  </div>
+</section>
+</main><script>window.APP={role:"{{user.role}}",csrf:"{{csrf}}"};</script><script src="/static/shared.js"></script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/service-worker.js').catch(()=>{})}</script></body></html>
