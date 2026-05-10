@@ -1,0 +1,93 @@
+BLOOD BANK V6.1.3 HOTFIX FULL AUDIT REPORT
+====================================================================================================
+
+[OK] 01 Python compile — 
+[OK] 02 shared.js syntax — OK
+[OK] 03 service-worker syntax — OK
+[OK] 04 version labels — 
+[OK] 05 patients section — 
+[OK] 06 backup section — 
+[OK] 07 components stock — 
+[OK] 08 users admin — 
+[OK] 09 hide clinical — 
+[OK] 10 global dark — 
+[OK] 11 nav mobile — 
+[OK] 12 PWA v613 — 
+[OK] 13 onclick handlers — []
+[OK] 14 GET / — 200
+[OK] 14 GET /login — 200
+[OK] 14 GET /api/version — 200
+[OK] 14 GET /api/health — 200
+[OK] 14 GET /api/health-debug — 200
+[OK] 14 GET /api/tx-reset — 200
+[OK] 14 GET /static/style.css — 200
+[OK] 14 GET /manifest.json — 200
+[OK] 14 GET /service-worker.js — 200
+[OK] 15 version endpoint — {'ok': True, 'title': 'Банк крові V6.1.3', 'version': 'V6.1.3'}
+[OK] 16 wrong login — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 17 first admin login — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 18 change password csrf — 82dd1b9b
+[OK] 19 logout — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 20 admin relogin — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 21 admin sees sections — markers
+[OK] 22 create doctor — {'ok': True}
+[OK] 23 reset doctor — {'ok': True}
+[OK] 24 clear doctor — {'ok': True}
+[OK] 22 create nurse — {'ok': True}
+[OK] 23 reset nurse — {'ok': True}
+[OK] 24 clear nurse — {'ok': True}
+[OK] 22 create transfusion — {'ok': True}
+[OK] 23 reset transfusion — {'ok': True}
+[OK] 24 clear transfusion — {'ok': True}
+[OK] 25 login doctor — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 26 dashboard doctor — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href
+[OK] 27 role config doctor — {'allowed': ['home', 'patients', 'requests', 'myRequests', 'history', 'telegramPersonal', 'pwaPersonal', 'transfusionJournal', 'reactions'], 'ok': True, 'role': 'doctor'}
+[OK] 25 login nurse — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 26 dashboard nurse — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href
+[OK] 27 role config nurse — {'allowed': ['home', 'patients', 'requests', 'myRequests', 'history', 'telegramPersonal', 'pwaPersonal', 'transfusionJournal', 'reactions', 'barcode'], 'ok': True, 'role': 'nurse'}
+[OK] 25 login transfusion — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 26 dashboard transfusion — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href
+[OK] 27 role config transfusion — {'allowed': ['home', 'patients', 'requests', 'stock', 'components', 'reports', 'users', 'telegram', 'pwa', 'monitor', 'maintenance', 'audit', 'backup', 'barcode', 'traceability', 'incompat', 'dashboardPro', 'temperature', 'writeoff', 'dailyReport', 'transfusionJournal', 'reactions'], 'ok': True, 'role': 'transfusion'}
+[OK] 28 request create — {'ok': True}
+[OK] 29 requests list — [{'address': 'Адреса', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 19:18:33', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': 'тест', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт 613', 'patient_rh': 'Rh+', 'patient_status': 'Військовий', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Ургентно', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}]
+[OK] 30 stock add RBC — {'ok': True}
+[OK] 30 stock add PLASMA — {'ok': True}
+[OK] 30 stock add PLT — {'ok': True}
+[OK] 30 stock add CRYO — {'ok': True}
+[OK] 30 stock add BAD — {'ok': True}
+[FAIL] 31 stock summary — {'error': 'no such table: stock', 'items': [], 'ok': False}
+[OK] 32 barcode scan — {'code': 'QR613_OK', 'ok': True, 'package': {'amount': 2.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 19:18:33', 'donor_group': 'O(I)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 1, 'note': '', 'pack_no': 'PACKOK', 'patient_name': '', 'qr_code': 'QR613_OK', 'series': '', 'type': 'Надходження', 'user_id': 1}}
+[OK] 33 barcode compatible — {'compatible': True, 'ok': True, 'package': {'amount': 2.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 19:18:33', 'donor_group': 'O(I)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 1, 'note': '', 'pack_no': 'PACKOK', 'patient_name': '', 'qr_code': 'QR613_OK', 'series': '', 'type': 'Надходження', 'user_id': 1}, 'reason': 'Сумісно', 'request': {'address': 'Адреса', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 19:18:33', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': 'тест', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт 613', 'patient_rh': 'Rh+', 'patient_status': 'Військовий', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Ургентно', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}}
+[OK] 34 barcode incompatible — {'compatible': False, 'ok': False, 'package': {'amount': 1.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 19:18:33', 'donor_group': 'B(III)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 5, 'note': '', 'pack_no': 'PACKB', 'patient_name': '', 'qr_code': 'QR613_BAD', 'series': '', 'type': 'Надходження', 'user_id': 1}, 'reason': 'ABO несумісність', 'red_alert': True, 'request': {'address': 'Адреса', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 19:18:33', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': 'тест', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт 613', 'patient_rh': 'Rh+', 'patient_status': 'Військовий', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Ургентно', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}}
+[OK] 35 users list — 200; bytes=647
+[OK] 36 backup create — 200; bytes=66
+[OK] 37 backups list — 200; bytes=140
+[OK] 38 dashboard pro — 200; bytes=138
+[OK] 39 temperature — 200; bytes=26
+[OK] 40 telegram me — 200; bytes=245
+[OK] 41 telegram status — 200; bytes=150
+[OK] 42 report xlsx — 200; bytes=5020
+[OK] 43 report pdf — 200; bytes=23805
+[OK] 44 audit csv — 200; bytes=1893
+[OK] 45 audit xlsx — 200; bytes=5738
+[OK] 46 final logout — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 47 final relogin — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.3</title><link rel="stylesheet" 
+[OK] 48 Gunicorn startup — 
+
+Підсумок: 71/72 тестів успішно.
+
+Issues:
+- 31 stock summary: {'error': 'no such table: stock', 'items': [], 'ok': False}
+
+
+FINAL STOCK SUMMARY FIX RETEST
+================================================================================
+[OK] 01 Python compile — 
+[OK] 02 stock add Еритроцитарні компоненти — {'ok': True}
+[OK] 02 stock add Плазма — {'ok': True}
+[OK] 02 stock add Тромбоцити — {'ok': True}
+[OK] 02 stock add Кріопреципітат — {'ok': True}
+[OK] 03 stock summary fixed — {'items': [{'component': 'Еритроцитарні компоненти', 'donor_group': 'O(I)', 'donor_rh': 'Rh+', 'nearest_expiry': '2030-01-01', 'packs': 1, 'total': 2.0}, {'component': 'Кріопреципітат', 'donor_group': 'O(I)', 'donor_rh': 'Rh+', 'nearest_expiry': '2030-01-01', 'packs': 1, 'total': 1.0}, {'component': 'Плазма', 'donor_group': 'AB(IV)', 'donor_rh': 'Rh+', 'nearest_expiry': '2030-01-01', 'packs': 1, 'total': 3.0}, {'component': 'Тромбоцити', 'donor_group': 'A(II)', 'donor_rh': 'Rh-', 'nearest_expiry': '2030-01-01', 'packs': 1, 'total': 1.0}], 'ok': True, 'table': 'stock_entries'}
+[OK] 04 version — {'ok': True, 'title': 'Банк крові V6.1.3', 'version': 'V6.1.3'}
+
+Фінальний підсумок після виправлення: OK; retest 7/7.

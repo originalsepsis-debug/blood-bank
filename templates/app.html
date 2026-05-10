@@ -1,5 +1,5 @@
-<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V6.1.2</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a>
-<nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button data-feature="stock" onclick="safeOpenFeature('stock')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button data-feature="patient" onclick="safeOpenFeature('patient')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram система</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('pwaInstallSec')">Додаток</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button><button data-feature="barcode" onclick="safeOpenFeature('barcode')">QR/Barcode</button><button onclick="show('traceabilitySec')">Traceability</button><button onclick="show('incompatSec')">Несумісності</button><button data-feature="dashboardPro" onclick="safeOpenFeature('dashboardPro')">Dashboard PRO</button><button data-feature="temperature" onclick="safeOpenFeature('temperature')">Температура</button><button onclick="show('writeoffSec')">Списання</button><button onclick="show('dailyReportSec')">Добові звіти</button></nav>
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V6.1.3</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a>
+<nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button data-feature="stock" onclick="safeOpenFeature('stock')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button data-feature="patient" onclick="safeOpenFeature('patient')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram система</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('pwaInstallSec')">Додаток</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button><button data-feature="barcode" onclick="safeOpenFeature('barcode')">QR/Barcode</button><button onclick="show('traceabilitySec')">Traceability</button><button onclick="show('incompatSec')">Несумісності</button><button data-feature="dashboardPro" onclick="safeOpenFeature('dashboardPro')">Dashboard PRO</button><button data-feature="temperature" onclick="safeOpenFeature('temperature')">Температура</button><button onclick="show('writeoffSec')">Списання</button><button onclick="show('dailyReportSec')">Добові звіти</button><button class="admin-transfusion-only" onclick="show('componentsSec')">Компоненти</button></nav>
 <section id="homeSec" class="section active role-home">
   <div class="role-title">
     <h2>Рольові інтерфейси — тільки потрібне</h2>
@@ -89,6 +89,18 @@
   </div>
 </section>
 
+
+<section id="patientsSec" class="card section flat-page">
+  <h2>👤 Пацієнт</h2>
+  <div class="notice flat-notice">Розділ пацієнта: створення вимоги, активні вимоги, історія та реакції.</div>
+  <div class="role-tile-grid patient-actions">
+    <button onclick="show('requestsSec')"><span>💧</span><b>Створити вимогу</b></button>
+    <button onclick="show('requestsSec')"><span>📋</span><b>Активні вимоги</b></button>
+    <button onclick="show('transfusionJournalSec')"><span>📄</span><b>Історія / журнал</b></button>
+    <button onclick="show('reactionsSec')"><span>⚠️</span><b>Реакції</b></button>
+  </div>
+</section>
+
 <section id="requestsSec" class="card section"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid request-form-v61">
 <label><span>ПІБ пацієнта <b>*</b></span><input id="patient_name" placeholder="Введіть ПІБ пацієнта"></label>
 <label><span>Дата народження <b>*</b></span><input id="birth_date" type="date" placeholder="ДД.ММ.РРРР"></label>
@@ -124,7 +136,15 @@
 <button class="req-tab" onclick="setRequestTab('written', this)">Списані</button>
 <button class="req-tab" onclick="setRequestTab('rejected', this)">Відмовлені</button>
 </div>
-<div id="reminders"></div><div id="requests"></div></section><section id="stockSec" class="card section"><h2>Склад</h2>{% if user.role in ['admin','transfusion'] %}<div class="form-grid"><select id="stock_type"><option>Надходження</option><option>Списання</option></select><select id="stock_component">
+<div id="reminders"></div><div id="requests"></div></section>
+<section id="componentsSec" class="card section admin-transfusion-only flat-page">
+  <h2>🧪 Компоненти на складі</h2>
+  <div class="notice flat-notice">Фактична наявність компонентів крові на складі за компонентом, групою, Rh, кількістю та найближчим терміном придатності.</div>
+  <div class="component-cards" id="componentSummaryCards"></div>
+  <div id="componentStockTable"></div>
+</section>
+
+<section id="stockSec" class="card section"><h2>Склад</h2>{% if user.role in ['admin','transfusion'] %}<div class="form-grid"><select id="stock_type"><option>Надходження</option><option>Списання</option></select><select id="stock_component">
 <option value="">Виберіть компонент</option>
 <option>Еритроцитарні компоненти</option>
 <option>Плазма</option>
@@ -236,9 +256,9 @@
 <div class="setting-row">✅ <div><b>Безпечне з'єднання</b><small>HTTPS захист увімкнено</small></div></div>
 </div>
 <div class="actions-row flat-actions">
-<button id="pwaInstallBtn" class="btn-green" onclick="installPWA()">📲 Встановити додаток</button>
-<button class="btn-blue" onclick="showPWAHelp()">ℹ️ Інструкція</button>
-<button class="btn-orange" onclick="clearPWACache()">🔄 Оновити кеш додатку</button>
+<button id="pwaInstallBtn" class="btn-green" onclick="installДодаток()">📲 Встановити додаток</button>
+<button class="btn-blue" onclick="showДодатокHelp()">ℹ️ Інструкція</button>
+<button class="btn-orange" onclick="clearДодатокCache()">🔄 Оновити кеш додатку</button>
 </div>
 <div id="pwaHelpBox" class="notice pwa-help" style="display:none">
 <h3>⬇️ Встановити додаток</h3>
@@ -424,4 +444,15 @@
     </div>
   </div>
 </section>
+
+<section id="backupSec" class="card section admin-transfusion-only flat-page">
+  <h2>☁️ Backup manager</h2>
+  <div class="notice flat-notice">Резервні копії бази. Доступно тільки адміністратору та трансфузіологу.</div>
+  <div class="actions-row flat-actions">
+    <button class="btn-green" onclick="createBackupV613()">➕ Створити backup</button>
+    <button class="btn-blue" onclick="loadBackupsV613()">🔄 Оновити список</button>
+  </div>
+  <div id="backupListV613" class="table-scroll"></div>
+</section>
+
 </main><script>window.APP={role:"{{user.role}}",csrf:"{{csrf}}"};</script><script src="/static/shared.js"></script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/service-worker.js').catch(()=>{})}</script></body></html>

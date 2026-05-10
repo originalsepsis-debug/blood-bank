@@ -650,3 +650,25 @@ table{min-width:680px}
   .flat-actions{display:grid;grid-template-columns:1fr!important}
   .audit-actions-row{display:grid}
 }
+
+
+/* V6.1.3 Hotfix */
+html,body{max-width:100%!important;overflow-x:hidden!important}
+body.dark,body.dark .container,body.dark main{background:#0b1220!important;color:#e5e7eb!important}
+body.dark .header{background:linear-gradient(135deg,#111827,#020617)!important}
+body.dark .card,body.dark .section,body.dark .role-phone,body.dark .audit-role-panel{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}
+body.dark input,body.dark select,body.dark textarea{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important}
+body.dark .notice,body.dark .flat-notice{background:#1e293b!important;color:#dbeafe!important;border-color:#334155!important}
+body.dark .role-status-card,body.dark .setting-row,body.dark .quick-info{background:#0f172a!important;color:#e5e7eb!important;border-color:#334155!important}
+body.dark .role-status-card b,body.dark .setting-row b,body.dark .role-tile-grid button b{color:#e5e7eb!important}
+body.dark .role-tile-grid button{background:#0f172a!important;color:#e5e7eb!important;border-color:#334155!important}
+.nav,nav{overflow-x:auto!important;overflow-y:hidden!important;display:flex!important;flex-wrap:nowrap!important;gap:12px!important;scrollbar-width:none!important;width:100%!important}
+.nav::-webkit-scrollbar,nav::-webkit-scrollbar{display:none!important}
+.nav button,nav button{flex:0 0 auto!important;min-width:max-content!important;white-space:nowrap!important}
+body[data-role="doctor"] .admin-transfusion-only,body[data-role="nurse"] .admin-transfusion-only{display:none!important}
+body[data-role="doctor"] button[onclick*="stockSec"],body[data-role="doctor"] button[onclick*="dashboardProSec"],body[data-role="doctor"] button[onclick*="temperatureSec"],body[data-role="doctor"] button[onclick*="componentsSec"],body[data-role="doctor"] button[onclick*="usersSec"],body[data-role="nurse"] button[onclick*="stockSec"],body[data-role="nurse"] button[onclick*="dashboardProSec"],body[data-role="nurse"] button[onclick*="temperatureSec"],body[data-role="nurse"] button[onclick*="componentsSec"],body[data-role="nurse"] button[onclick*="usersSec"]{display:none!important}
+.component-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:16px 0}
+.component-card{border-radius:18px;padding:18px;color:#fff;font-weight:900;box-shadow:0 12px 28px rgba(15,23,42,.12)}
+.component-card.red{background:#dc2626}.component-card.yellow{background:#facc15;color:#111827}.component-card.blue{background:#3b82f6}.component-card.purple{background:#9333ea}.component-card.dark{background:#111827}.component-card .num{font-size:34px;margin-top:6px}
+.table-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.table-scroll table{min-width:760px;width:100%;border-collapse:collapse}.table-scroll th,.table-scroll td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;white-space:nowrap}
+@media(max-width:760px){.component-cards{grid-template-columns:1fr 1fr}.card,.section{width:calc(100% - 14px)!important;margin-left:auto!important;margin-right:auto!important}}

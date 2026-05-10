@@ -872,3 +872,52 @@ async function loadAll(){
   loadHomeQuickInfo();
 }
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{loadHomeQuickInfo();updatePWAStatus();},700));
+
+
+// V6.1.3 Hotfix
+function safeShowV613(primary,fallback){
+  const p=document.getElementById(primary);
+  if(p&&!p.classList.contains('role-hidden')){show(primary);return true}
+  const f=document.getElementById(fallback);
+  if(f&&!f.classList.contains('role-hidden')){show(fallback);return true}
+  try{toast('Розділ не знайдено або недоступний для ролі','warn')}catch(e){}
+  return false;
+}
+async function applyRoleVisibilityV613(){
+  let role=document.body.getAttribute('data-role')||window.ROLE||'admin';
+  try{const cfg=await jget('/api/ui/role-config'); if(cfg&&cfg.ok&&cfg.role)role=cfg.role;}catch(e){}
+  document.body.setAttribute('data-role',role);
+  const clinical=role==='doctor'||role==='nurse';
+  document.querySelectorAll('.admin-transfusion-only').forEach(el=>el.classList.toggle('role-hidden',clinical));
+  if(clinical){
+    ['stockSec','componentsSec','dashboardProSec','temperatureSec','usersSec','backupSec','maintenanceSec','monitorSec'].forEach(id=>{const el=document.getElementById(id); if(el)el.classList.add('role-hidden')});
+  }
+}
+function componentColorV613(name){name=(name||'').toLowerCase(); if(name.includes('плаз'))return'yellow'; if(name.includes('тромб'))return'blue'; if(name.includes('кріо'))return'purple'; if(name.includes('ерит')||name.includes('кров'))return'red'; return'dark'}
+async function loadComponentStockV613(){
+  const cards=document.getElementById('componentSummaryCards'), table=document.getElementById('componentStockTable');
+  if(!cards&&!table)return;
+  let res={items:[]}; try{res=await jget('/api/stock/summary')}catch(e){}
+  const items=res.items||[], totals={}; items.forEach(x=>{totals[x.component]=(totals[x.component]||0)+Number(x.total||0)});
+  const comps=['Еритроцитарні компоненти','Плазма','Тромбоцити','Кріопреципітат'];
+  if(cards)cards.innerHTML=comps.map(c=>`<div class="component-card ${componentColorV613(c)}"><div>${c}</div><div class="num">${totals[c]||0}</div></div>`).join('');
+  if(table)table.innerHTML='<div class="table-scroll"><table><tr><th>Компонент</th><th>Група</th><th>Rh</th><th>Кількість</th><th>Пакетів</th><th>Найближчий термін</th></tr>'+items.map(x=>`<tr><td>${x.component||''}</td><td>${x.donor_group||''}</td><td>${x.donor_rh||''}</td><td>${x.total||0}</td><td>${x.packs||0}</td><td>${x.nearest_expiry||''}</td></tr>`).join('')+'</table></div>';
+}
+async function loadBackupsV613(){
+  const box=document.getElementById('backupListV613'); if(!box)return;
+  let d=[]; try{d=await jget('/api/backups')}catch(e){d=[]}
+  if(!Array.isArray(d)||!d.length){box.innerHTML='<div class="notice">Backup ще не створено. Натисніть “Створити backup”.</div>';return}
+  box.innerHTML='<div class="table-scroll"><table><tr><th>Дата</th><th>Файл</th><th>Розмір</th><th>Дія</th></tr>'+d.map(x=>`<tr><td>${x.created_at||''}</td><td>${x.file||x.filename||''}</td><td>${x.size||x.size_bytes||''}</td><td>${x.download_url?`<a class="btn-blue" href="${x.download_url}">Скачати</a>`:'—'}</td></tr>`).join('')+'</table></div>';
+}
+async function createBackupV613(){let r=await jpost('/api/backups/create',{}); toast(r.ok?'✅ Backup створено':(r.error||'Backup помилка'),r.ok?'good':'warn'); loadBackupsV613();}
+function applyDarkModeV613(){if(localStorage.getItem('bloodBankDarkMode')==='1')document.body.classList.add('dark'); window.toggleTheme=function(){document.body.classList.toggle('dark'); localStorage.setItem('bloodBankDarkMode',document.body.classList.contains('dark')?'1':'0');};}
+const oldShowPreV613=typeof show==='function'?show:null;
+function show(id){
+  if(!document.getElementById(id)){if(id==='patientsSec')id='requestsSec';else{try{toast('Розділ не знайдено або недоступний для ролі','warn')}catch(e){};return;}}
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id); if(el){el.classList.add('active'); el.classList.remove('role-hidden');}
+  if(id==='componentsSec')loadComponentStockV613(); if(id==='backupSec')loadBackupsV613(); if(id==='usersSec'&&typeof loadUsersPanel==='function')loadUsersPanel();
+}
+const oldLoadAllV613=typeof loadAll==='function'?loadAll:null;
+async function loadAll(){if(oldLoadAllV613)await oldLoadAllV613(); applyRoleVisibilityV613(); loadComponentStockV613(); loadBackupsV613();}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{applyDarkModeV613();applyRoleVisibilityV613();loadComponentStockV613();loadBackupsV613();},700));
