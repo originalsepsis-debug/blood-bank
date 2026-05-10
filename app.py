@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.9.5"
+APP_TITLE = "Банк крові V5.9.6"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -1630,7 +1630,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.5")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.6")
 
 
 @app.get("/api/telegram/status")
@@ -2438,6 +2438,22 @@ def api_emergency_db_fix_v593():
 def api_tx_reset_v594():
     db_rollback_safe()
     return jsonify(ok=True, version="V5.9.5", message="transaction rolled back")
+
+
+@app.get("/api/ui/role-config")
+@login_required
+def api_ui_role_config():
+    u=current_user()
+    role=u.get("role","")
+    if role in ("admin","transfusion"):
+        allowed=["dashboard","stock","requests","reports","users","telegram","pwa","monitor","audit","maintenance","barcode","traceability","incompat","dashboardPro","temperature","writeoff","dailyReport"]
+    elif role=="doctor":
+        allowed=["dashboard","requests","patients","history","telegram","pwa"]
+    elif role=="nurse":
+        allowed=["dashboard","requests","stock","barcode","traceability","temperature","telegram","pwa"]
+    else:
+        allowed=["dashboard","requests"]
+    return jsonify(ok=True, role=role, allowed=allowed)
 
 @app.get("/manifest.json")
 def manifest():

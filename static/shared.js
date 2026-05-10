@@ -638,3 +638,73 @@ async function loadDailyReports(){
     d.map(x=>`<tr><td>${x.created_at||''}</td><td>${x.report_type||''}</td><td>${x.sent_telegram?'✅':'—'}</td><td><pre>${x.report_text||''}</pre></td></tr>`).join('')+'</table></div>';
 }
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{loadDashboardPro&&loadDashboardPro();},800)});
+
+
+// V5.9.6 Role UI Clean
+const ROLE_SECTION_MAP={
+  admin:["dashboard","stock","requests","reports","users","telegram","pwa","monitor","audit","maintenance","barcode","traceability","incompat","dashboardPro","temperature","writeoff","dailyReport"],
+  transfusion:["dashboard","stock","requests","reports","users","telegram","pwa","monitor","audit","maintenance","barcode","traceability","incompat","dashboardPro","temperature","writeoff","dailyReport"],
+  doctor:["dashboard","requests","patients","history","telegram","pwa"],
+  nurse:["dashboard","requests","stock","barcode","traceability","temperature","telegram","pwa"]
+};
+function roleCleanSectionKey(id){
+  id=(id||'').toLowerCase();
+  if(id.includes('monitor')||id.includes('health')||id.includes('maintenance'))return 'monitor';
+  if(id.includes('audit'))return 'audit';
+  if(id.includes('user'))return 'users';
+  if(id.includes('telegram'))return 'telegram';
+  if(id.includes('pwa'))return 'pwa';
+  if(id.includes('barcode'))return 'barcode';
+  if(id.includes('traceability')||id.includes('trace'))return 'traceability';
+  if(id.includes('incompat'))return 'incompat';
+  if(id.includes('dashboardpro'))return 'dashboardPro';
+  if(id.includes('temperature'))return 'temperature';
+  if(id.includes('writeoff'))return 'writeoff';
+  if(id.includes('dailyreport'))return 'dailyReport';
+  if(id.includes('stock'))return 'stock';
+  if(id.includes('request'))return 'requests';
+  if(id.includes('report'))return 'reports';
+  if(id.includes('patient'))return 'patients';
+  if(id.includes('history'))return 'history';
+  return 'dashboard';
+}
+function roleCleanCurrentRole(){
+  let txt=(document.body.innerText||'').toLowerCase();
+  if(txt.includes('admin')||txt.includes('адміністратор'))return 'admin';
+  if(txt.includes('transfusion')||txt.includes('трансфуз'))return 'transfusion';
+  if(txt.includes('doctor')||txt.includes('лікар')||txt.includes('доктор'))return 'doctor';
+  if(txt.includes('nurse')||txt.includes('медсест'))return 'nurse';
+  return 'doctor';
+}
+async function roleCleanApply(){
+  let role=roleCleanCurrentRole();
+  try{
+    let cfg=await jget('/api/ui/role-config');
+    if(cfg&&cfg.ok&&cfg.role)role=cfg.role;
+  }catch(e){}
+  document.body.setAttribute('data-role',role||'unknown');
+  const allowed=ROLE_SECTION_MAP[role]||ROLE_SECTION_MAP.doctor;
+  document.querySelectorAll('nav button').forEach(btn=>{
+    const call=btn.getAttribute('onclick')||'';
+    const m=call.match(/show\('([^']+)'\)/);
+    if(!m)return;
+    const key=roleCleanSectionKey(m[1]);
+    btn.classList.toggle('role-hidden',!allowed.includes(key));
+  });
+  document.querySelectorAll('.section').forEach(sec=>{
+    const key=roleCleanSectionKey(sec.id);
+    sec.classList.toggle('role-hidden',!allowed.includes(key));
+  });
+  document.querySelectorAll('.role-admin-only,.audit-action').forEach(el=>{
+    el.classList.toggle('role-hidden',!['admin','transfusion'].includes(role));
+  });
+  if(['doctor','nurse'].includes(role)){
+    document.querySelectorAll('.dashboard-box,.card').forEach(el=>{
+      const txt=(el.innerText||'').toLowerCase();
+      if(txt.includes('database')||txt.includes('backup age')||txt.includes('maintenance')||txt.includes('rollback')||txt.includes('audit xlsx')||txt.includes('audit csv')){
+        el.classList.add('role-hidden');
+      }
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(roleCleanApply,800));

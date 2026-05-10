@@ -292,3 +292,20 @@ body.dark #toastBox.toast.warn{
 
 /* V5.9 Production Suite */
 #dailyReportResult pre{white-space:pre-wrap;font-family:inherit}.dashboard-number{font-size:30px;font-weight:1000}
+
+
+/* V5.9.6 Role UI Clean */
+.role-hidden{display:none!important}
+nav{display:flex;gap:12px;overflow-x:auto;padding:12px 10px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{min-width:max-content;border-radius:22px!important;padding:14px 22px!important;font-weight:900!important;box-shadow:0 8px 18px rgba(37,99,235,.12)}
+body[data-role="admin"] nav button,body[data-role="transfusion"] nav button{background:#2563eb;color:#fff}
+body[data-role="doctor"] nav button{background:#16a34a;color:#fff}
+body[data-role="nurse"] nav button{background:#7e22ce;color:#fff}
+.audit-action,a[href*="audit/export"]{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:14px 20px!important;border-radius:16px!important;text-decoration:none!important;font-weight:900!important;margin:8px!important;box-sizing:border-box}
+.audit-xlsx,a[href*="audit/export/xlsx"]{background:#2563eb!important;color:#fff!important;border:2px solid #2563eb!important}
+.audit-csv,a[href*="audit/export/csv"]{background:#16a34a!important;color:#fff!important;border:2px solid #16a34a!important}
+body[data-role="doctor"] .card,body[data-role="doctor"] .section{border-top:4px solid rgba(22,163,74,.28)}
+body[data-role="nurse"] .card,body[data-role="nurse"] .section{border-top:4px solid rgba(126,34,206,.28)}
+body[data-role="admin"] .card,body[data-role="transfusion"] .card{border-top:4px solid rgba(37,99,235,.22)}
+@media(max-width:700px){.audit-action,a[href*="audit/export"]{width:calc(50% - 16px)!important;font-size:16px!important}.actions-row{display:flex;flex-wrap:wrap;gap:10px}}
