@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V6.0.4"
+APP_TITLE = "Банк крові V6.1.2"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -698,7 +698,7 @@ def health_payload():
             dt=datetime.strptime(b["created_at"], "%Y-%m-%d %H:%M:%S")
             age=round((datetime.now()-dt).total_seconds()/3600,2)
     except Exception: pass
-    return {"ok":ok,"version":"V6.0.4","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
+    return {"ok":ok,"version":"V6.1.2","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
         "admin_count": len(rows("SELECT id FROM users WHERE role=\'admin\' AND active=1")),"time":now()}
 
 
@@ -1618,7 +1618,7 @@ def api_external_event():
 @app.get("/api/external/status")
 @api_token_required
 def api_external_status():
-    return jsonify(ok=True, version="V6.0.4", postgres=IS_POSTGRES, time=now())
+    return jsonify(ok=True, version="V6.1.2", postgres=IS_POSTGRES, time=now())
 
 @app.get("/api/security/full-audit")
 @role_required("admin")
@@ -1916,7 +1916,7 @@ def ensure_login_attempts_columns_v592():
 
 @app.get("/api/health-debug")
 def api_health_debug():
-    out={"ok":False,"version":"V6.0.4"}
+    out={"ok":False,"version":"V6.1.2"}
     try:
         out["db_select"]=row("SELECT 1 AS ok")
         out["migrations"]=v593_fix_all_known_migrations()
@@ -2414,7 +2414,7 @@ def v593_fix_all_known_migrations():
 
 @app.get("/api/public-health")
 def api_public_health_v593():
-    out={"ok":False,"version":"V6.0.4"}
+    out={"ok":False,"version":"V6.1.2"}
     try:
         out["db_select"]=row("SELECT 1 AS ok")
         out["migrations"]=v593_fix_all_known_migrations()
@@ -2426,7 +2426,7 @@ def api_public_health_v593():
 
 @app.get("/api/emergency-db-fix")
 def api_emergency_db_fix_v593():
-    out={"ok":False,"version":"V6.0.4"}
+    out={"ok":False,"version":"V6.1.2"}
     try:
         out["migrations"]=v593_fix_all_known_migrations()
         out["admins"]=len(rows("SELECT id FROM users WHERE role='admin' AND active=1"))
@@ -2440,7 +2440,7 @@ def api_emergency_db_fix_v593():
 @app.get("/api/tx-reset")
 def api_tx_reset_v594():
     db_rollback_safe()
-    return jsonify(ok=True, version="V6.0.4", message="transaction rolled back")
+    return jsonify(ok=True, version="V6.1.2", message="transaction rolled back")
 
 
 @app.get("/api/ui/role-config")
@@ -2469,7 +2469,7 @@ def api_ui_feature_map():
 
 
 # ================= V6.0.1 STABLE CLEAN ARCHITECTURE =================
-APP_VERSION = "V6.0.4"
+APP_VERSION = "V6.1.2"
 
 ROLE_PERMISSIONS = {
     "admin": {
@@ -2578,22 +2578,46 @@ def api_clean_architecture_v60():
 
 
 
+
+
 @app.post("/api/users/reset-password")
 @role_required("admin","transfusion")
-def api_users_reset_password_v603():
+def api_users_reset_password_v612():
     d=request.json or {}
     username=(d.get("username") or "").strip()
     password=d.get("password") or "Password123"
     if not username:
         return jsonify(ok=False,error="username required"),400
     try:
-        pw=generate_password_hash(password)
-        # old schemas may or may not have must_change_password
+        salt, ph = hash_password(password)
+        execute("UPDATE users SET password_hash=?, salt=? WHERE username=?", (ph, salt, username))
+        for col in ["must_change_password","force_password_change","password_change_required"]:
+            try:
+                execute(f"UPDATE users SET {col}=0 WHERE username=?", (username,))
+            except Exception:
+                db_rollback_safe()
         try:
-            execute("UPDATE users SET password_hash=?, must_change_password=0 WHERE username=?", (pw, username))
+            execute("UPDATE users SET first_login=0 WHERE username=?", (username,))
         except Exception:
             db_rollback_safe()
-            execute("UPDATE users SET password_hash=? WHERE username=?", (pw, username))
+        return jsonify(ok=True)
+    except Exception as e:
+        db_rollback_safe()
+        return jsonify(ok=False,error=str(e)),500
+
+@app.post("/api/users/clear-first-login")
+@role_required("admin","transfusion")
+def api_users_clear_first_login_v611():
+    d=request.json or {}
+    username=(d.get("username") or "").strip()
+    if not username:
+        return jsonify(ok=False,error="username required"),400
+    try:
+        for col in ["must_change_password","force_password_change","password_change_required","first_login"]:
+            try:
+                execute(f"UPDATE users SET {col}=0 WHERE username=?", (username,))
+            except Exception:
+                db_rollback_safe()
         return jsonify(ok=True)
     except Exception as e:
         db_rollback_safe()
@@ -2603,8 +2627,8 @@ def api_users_reset_password_v603():
 
 
 @app.get("/api/version")
-def api_version_v604():
-    return jsonify(ok=True, version="V6.0.4", title=APP_TITLE)
+def api_version_v612():
+    return jsonify(ok=True, version="V6.1.2", title=APP_TITLE)
 
 @app.get("/manifest.json")
 def manifest():

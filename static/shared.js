@@ -3,6 +3,8 @@ const ROLE=APP.role, CSRF=APP.csrf;
 const FIELD_LABELS_UA={
   patient_name:'ПІБ пацієнта',
   birth_date:'Дата народження',
+  patient_status:'Статус пацієнта',
+  urgency:'Терміновість',
   department:'Відділення',
   component:'Компонент крові',
   patient_group:'Група крові',
@@ -120,7 +122,7 @@ function actions(x, tab='active'){
   return h
 }
 async function createRequest(){
-  if(!requireFields(['patient_name','birth_date','department','component','patient_group','patient_rh','amount','diagnosis']))return;let d={patient_name:val('patient_name'),birth_date:val('birth_date'),address:val('address'),patient_status:val('patient_status'),department:val('department'),component:val('component'),patient_group:val('patient_group'),patient_rh:val('patient_rh'),amount:val('amount'),urgency:val('urgency'),diagnosis:val('diagnosis'),note:val('note')};let j=await jpost('/api/request/create',d);toast(j.ok?'✅ Вимогу створено':(j.error||'Помилка'),'good');;loadAll();}
+  if(!requireFields(['patient_name','birth_date','patient_status','department','component','patient_group','patient_rh','amount','urgency','diagnosis']))return;let d={patient_name:val('patient_name'),birth_date:val('birth_date'),address:val('address'),patient_status:val('patient_status'),department:val('department'),component:val('component'),patient_group:val('patient_group'),patient_rh:val('patient_rh'),amount:val('amount'),urgency:val('urgency'),diagnosis:val('diagnosis'),note:val('note')};let j=await jpost('/api/request/create',d);toast(j.ok?'✅ Вимогу створено':(j.error||'Помилка'),'good');;loadAll();}
 async function reqAction(id,action){let d={id,action};if(action=='issue'){d.donor_group=prompt('Група донора','');d.donor_rh=prompt('Rh','');d.pack_no=prompt('№ пакета','');d.series=prompt('Серія','');d.expiry=prompt('Термін','');d.override=confirm('Дозволити видачу при попередженні несумісності?')}let j=await jpost('/api/request/action',d);alert(j.ok?'Готово':j.error);loadAll();}
 function openUsedModal(id){let use_date=prompt('Дата/час використання',new Date().toISOString().slice(0,16));let used_by=prompt('Хто підтвердив','');let use_confirm=prompt('Підтвердження','перелито');if(!use_date||!used_by||!use_confirm)return;jpost('/api/request/used',{id,use_date,used_by,use_confirm}).then(j=>{alert(j.ok?'Збережено':j.error);loadAll();});}
 function openWriteoffModal(id){let writeoff_date=prompt('Дата/час списання',new Date().toISOString().slice(0,16));let written_by=prompt('Хто списав','');let writeoff_reason=prompt('Причина','');if(!writeoff_date||!written_by||!writeoff_reason)return;jpost('/api/request/writeoff',{id,writeoff_date,written_by,writeoff_reason}).then(j=>{alert(j.ok?'Списано':j.error);loadAll();});}
@@ -802,3 +804,71 @@ function v602RepairLayout(){
 }
 document.addEventListener('DOMContentLoaded',()=>setTimeout(v602RepairLayout,500));
 window.addEventListener('resize',()=>setTimeout(v602RepairLayout,200));
+
+
+// V6.1 Role Dashboard UI overrides
+async function loadHomeQuickInfo(){
+  try{
+    const stock=await jget('/api/stock');
+    const req=await jget('/api/requests/mine');
+    const s=document.getElementById('homeStockCount');
+    const r=document.getElementById('homeRequestCount');
+    if(s)s.textContent=Array.isArray(stock)?stock.length:'—';
+    if(r)r.textContent=Array.isArray(req)?req.filter(x=>!['used','written','rejected'].includes(String(x.status||''))).length:'—';
+  }catch(e){}
+}
+async function loadTelegramStatus(){
+  const box=document.getElementById('telegramStatus');
+  if(!box)return;
+  const s=await jget('/api/telegram/status');
+  box.innerHTML=`<div class="setting-list">
+    <div class="setting-row ${s.enabled?'ok':'warn'}">✅ <div><b>Telegram ${s.enabled?'увімкнено':'вимкнено'}</b><small>${s.enabled?'Бот активний у системі':'TELEGRAM_ENABLED вимкнено'}</small></div></div>
+    <div class="setting-row ${s.bot_configured?'ok':'warn'}">${s.bot_configured?'✅':'⚠️'} <div><b>Bot token</b><small>${s.bot_configured?'TELEGRAM_BOT_TOKEN налаштовано':'Додайте TELEGRAM_BOT_TOKEN у Render'}</small></div></div>
+    <div class="setting-row ${s.chat_configured?'ok':'warn'}">${s.chat_configured?'✅':'⚠️'} <div><b>Chat ID</b><small>${s.chat_configured?'TELEGRAM_CHAT_ID налаштовано':'Додайте TELEGRAM_CHAT_ID у Render'}</small></div></div>
+    <div class="setting-row">🔔 <div><b>Silent time</b><small>${s.silent_now?'Тихий режим':'Активний режим'} ${s.silent_start}:00 - ${s.silent_end}:00</small></div></div>
+  </div>`;
+  loadTelegramLogs();
+  loadTelegramQueue();
+}
+async function loadTelegramMe(){
+  const box=document.getElementById('telegramMeBox');
+  if(!box)return;
+  const d=await jget('/api/telegram/me');
+  const a=document.getElementById('telegramConnectBtn');
+  if(a){
+    if(d.link_url){a.href=d.link_url; a.style.display='inline-flex'}
+    else{a.href='#'; a.style.display='inline-flex'}
+  }
+  box.innerHTML=`<div class="setting-list">
+    <div class="setting-row ${d.bot_username?'ok':'warn'}">${d.bot_username?'✅':'⚠️'} <div><b>Bot</b><small>${d.bot_username?'@'+d.bot_username:'Додайте TELEGRAM_BOT_USERNAME в Render'}</small></div></div>
+    <div class="setting-row ${d.telegram_chat_id?'ok':'warn'}">${d.telegram_chat_id?'✅':'⚠️'} <div><b>Chat ID</b><small>${d.telegram_chat_id||'Не підключено. Натисніть Підключити Telegram і START'}</small></div></div>
+    <div class="setting-row"><span>👤</span><div><b>Username</b><small>${d.telegram_username||'—'}</small></div></div>
+    <div class="setting-row ${d.telegram_enabled?'ok':'warn'}">${d.telegram_enabled?'✅':'⚠️'} <div><b>Статус</b><small>${d.telegram_enabled?'Увімкнено':'Вимкнено'}</small></div></div>
+  </div>`;
+  const s=d.settings||{};
+  const set=(id,v)=>{let el=document.getElementById(id); if(el)el.checked=!!v};
+  set('tg_set_enabled',d.telegram_enabled);
+  set('tg_set_new_requests',s.new_requests);
+  set('tg_set_critical',s.critical);
+  set('tg_set_expiring',s.expiring);
+  set('tg_set_reactions',s.reactions);
+  set('tg_set_backups',s.backups);
+}
+function updatePWAStatus(){
+  const box=document.getElementById('pwaStatusBox');
+  const btn=document.getElementById('pwaInstallBtn');
+  if(!box)return;
+  const standalone=isStandalonePWA();
+  box.innerHTML=`<div class="setting-list">
+    <div class="setting-row ${standalone?'ok':'warn'}">${standalone?'✅':'🌐'} <div><b>${standalone?'Додаток встановлено':'Відкрито у браузері'}</b><small>${standalone?'Ви використовуєте останню версію':'Можна встановити на головний екран'}</small></div></div>
+    <div class="setting-row ${deferredPWAInstall?'ok':'warn'}">${deferredPWAInstall?'✅':'⚠️'} <div><b>Швидке встановлення</b><small>${deferredPWAInstall?'Кнопка встановлення доступна':'Якщо кнопка сіра — скористайтесь інструкцією'}</small></div></div>
+    <div class="setting-row ${'serviceWorker' in navigator?'ok':'warn'}">${'serviceWorker' in navigator?'✅':'❌'} <div><b>Service Worker</b><small>${'serviceWorker' in navigator?'Офлайн-кеш підтримується':'Браузер не підтримує offline mode'}</small></div></div>
+  </div>`;
+  if(btn) btn.disabled=standalone;
+}
+const oldLoadAllV61 = typeof loadAll === 'function' ? loadAll : null;
+async function loadAll(){
+  if(oldLoadAllV61) await oldLoadAllV61();
+  loadHomeQuickInfo();
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{loadHomeQuickInfo();updatePWAStatus();},700));
