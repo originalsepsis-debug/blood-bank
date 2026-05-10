@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V6.0.1"
+APP_TITLE = "Банк крові V6.0.4"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -698,7 +698,7 @@ def health_payload():
             dt=datetime.strptime(b["created_at"], "%Y-%m-%d %H:%M:%S")
             age=round((datetime.now()-dt).total_seconds()/3600,2)
     except Exception: pass
-    return {"ok":ok,"version":"V6.0.1","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
+    return {"ok":ok,"version":"V6.0.4","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
         "admin_count": len(rows("SELECT id FROM users WHERE role=\'admin\' AND active=1")),"time":now()}
 
 
@@ -953,12 +953,19 @@ def index():
     if "csrf" not in session: session["csrf"] = secrets.token_hex(24)
     session["last_seen"] = time.time()
     u = current_user()
-    if not u: return render_template("login.html", title=APP_TITLE)
+    if not u: return render_template("login.html", title=APP_TITLE, error=None)
     if u["first_login"]: return render_template("change_password.html", title=APP_TITLE, user=u, csrf=session["csrf"])
     return render_template("app.html", title=APP_TITLE, user=u, csrf=session["csrf"])
 
-@app.post("/login")
+@app.route("/login", methods=["GET","POST"])
 def login():
+    # V603_LOGIN_GET_FIX
+    if request.method == "GET":
+        try:
+            v60_db_safe_reset()
+        except Exception:
+            pass
+        return render_template("login.html", title=APP_TITLE, error=None)
     # V595_LOGIN_ROLLBACK_BEFORE_SELECT
     db_rollback_safe()
     # V594_LOGIN_ROLLBACK_BEFORE_SELECT
@@ -1611,7 +1618,7 @@ def api_external_event():
 @app.get("/api/external/status")
 @api_token_required
 def api_external_status():
-    return jsonify(ok=True, version="V6.0.1", postgres=IS_POSTGRES, time=now())
+    return jsonify(ok=True, version="V6.0.4", postgres=IS_POSTGRES, time=now())
 
 @app.get("/api/security/full-audit")
 @role_required("admin")
@@ -1909,7 +1916,7 @@ def ensure_login_attempts_columns_v592():
 
 @app.get("/api/health-debug")
 def api_health_debug():
-    out={"ok":False,"version":"V6.0.1"}
+    out={"ok":False,"version":"V6.0.4"}
     try:
         out["db_select"]=row("SELECT 1 AS ok")
         out["migrations"]=v593_fix_all_known_migrations()
@@ -2407,7 +2414,7 @@ def v593_fix_all_known_migrations():
 
 @app.get("/api/public-health")
 def api_public_health_v593():
-    out={"ok":False,"version":"V6.0.1"}
+    out={"ok":False,"version":"V6.0.4"}
     try:
         out["db_select"]=row("SELECT 1 AS ok")
         out["migrations"]=v593_fix_all_known_migrations()
@@ -2419,7 +2426,7 @@ def api_public_health_v593():
 
 @app.get("/api/emergency-db-fix")
 def api_emergency_db_fix_v593():
-    out={"ok":False,"version":"V6.0.1"}
+    out={"ok":False,"version":"V6.0.4"}
     try:
         out["migrations"]=v593_fix_all_known_migrations()
         out["admins"]=len(rows("SELECT id FROM users WHERE role='admin' AND active=1"))
@@ -2433,7 +2440,7 @@ def api_emergency_db_fix_v593():
 @app.get("/api/tx-reset")
 def api_tx_reset_v594():
     db_rollback_safe()
-    return jsonify(ok=True, version="V6.0.1", message="transaction rolled back")
+    return jsonify(ok=True, version="V6.0.4", message="transaction rolled back")
 
 
 @app.get("/api/ui/role-config")
@@ -2462,7 +2469,7 @@ def api_ui_feature_map():
 
 
 # ================= V6.0.1 STABLE CLEAN ARCHITECTURE =================
-APP_VERSION = "V6.0.1"
+APP_VERSION = "V6.0.4"
 
 ROLE_PERMISSIONS = {
     "admin": {
@@ -2568,9 +2575,36 @@ def api_clean_architecture_v60():
 # ================= END V6.0.1 STABLE CLEAN ARCHITECTURE =================
 
 
+
+
+
+@app.post("/api/users/reset-password")
+@role_required("admin","transfusion")
+def api_users_reset_password_v603():
+    d=request.json or {}
+    username=(d.get("username") or "").strip()
+    password=d.get("password") or "Password123"
+    if not username:
+        return jsonify(ok=False,error="username required"),400
+    try:
+        pw=generate_password_hash(password)
+        # old schemas may or may not have must_change_password
+        try:
+            execute("UPDATE users SET password_hash=?, must_change_password=0 WHERE username=?", (pw, username))
+        except Exception:
+            db_rollback_safe()
+            execute("UPDATE users SET password_hash=? WHERE username=?", (pw, username))
+        return jsonify(ok=True)
+    except Exception as e:
+        db_rollback_safe()
+        return jsonify(ok=False,error=str(e)),500
+
+
+
+
 @app.get("/api/version")
-def api_version_v601():
-    return jsonify(ok=True, version="V6.0.1", title=APP_TITLE)
+def api_version_v604():
+    return jsonify(ok=True, version="V6.0.4", title=APP_TITLE)
 
 @app.get("/manifest.json")
 def manifest():

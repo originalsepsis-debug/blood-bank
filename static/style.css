@@ -340,3 +340,105 @@ body[data-role="admin"] nav button, body[data-role="transfusion"] nav button{bac
   border-radius:14px;
   font-weight:800;
 }
+
+
+/* V6.0.2 Interface Repair */
+html,body{
+  max-width:100%!important;
+  overflow-x:hidden!important;
+}
+*{
+  box-sizing:border-box!important;
+}
+main,.container,.content,.card,.section{
+  max-width:100%!important;
+}
+nav{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  gap:12px!important;
+  padding:12px 10px!important;
+  scrollbar-width:none!important;
+}
+nav::-webkit-scrollbar{display:none!important}
+nav button{
+  flex:0 0 auto!important;
+  min-width:max-content!important;
+  max-width:none!important;
+  white-space:nowrap!important;
+  border-radius:22px!important;
+  padding:14px 22px!important;
+}
+.section,.card{
+  overflow:hidden!important;
+}
+.table-scroll{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  border-radius:14px!important;
+}
+.table-scroll table,
+table{
+  min-width:720px!important;
+  width:max-content!important;
+  border-collapse:collapse!important;
+}
+td,th{
+  white-space:nowrap!important;
+  max-width:260px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.audit-action,a[href*="audit/export"]{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:50px!important;
+  padding:12px 18px!important;
+  border-radius:16px!important;
+  text-decoration:none!important;
+  font-weight:900!important;
+  margin:8px!important;
+  color:#fff!important;
+}
+a[href*="audit/export/xlsx"]{background:#2563eb!important}
+a[href*="audit/export/csv"]{background:#16a34a!important}
+.empty-card-fixed{
+  min-height:70px!important;
+  color:#64748b!important;
+  display:flex!important;
+  align-items:center!important;
+  padding:18px!important;
+}
+.notice,.hint,.info-box,.telegram-card,.pwa-card{
+  word-break:break-word!important;
+  overflow-wrap:anywhere!important;
+}
+input,select,textarea,button{
+  max-width:100%!important;
+}
+@media(max-width:700px){
+  body{
+    width:100%!important;
+  }
+  .card,.section{
+    margin-left:auto!important;
+    margin-right:auto!important;
+    width:calc(100% - 18px)!important;
+  }
+  .dashboard-grid,.grid2{
+    grid-template-columns:1fr!important;
+  }
+  table{
+    font-size:14px!important;
+  }
+}
+
+.login-error{background:#fee2e2;color:#991b1b;border-radius:16px;padding:14px;margin:12px 0;font-weight:900}

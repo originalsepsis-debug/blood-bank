@@ -737,3 +737,68 @@ async function v60ApplyPermissions(){
   }catch(e){}
 }
 document.addEventListener('DOMContentLoaded',()=>setTimeout(v60ApplyPermissions,900));
+
+
+// V6.0.2 Interface Repair
+const V602_FEATURE_TARGETS={
+  monitor:['monitorSec','healthSec','dashboardProSec'],
+  pwa:['pwaInstallSec','pwaSec'],
+  telegram:['telegramPersonalSec','telegramSec'],
+  barcode:['barcodeSec','qrSec','scanSec'],
+  traceability:['traceabilitySec','traceSec'],
+  stock:['stockSec','warehouseSec'],
+  requests:['requestsSec','requestSec','myRequestsSec'],
+  request:['requestSec','requestsSec','myRequestsSec'],
+  reports:['reportsSec','reportSec'],
+  users:['usersSec','userSec'],
+  audit:['monitorSec','reportsSec'],
+  temperature:['temperatureSec','fridgeSec'],
+  writeoff:['writeoffSec'],
+  dailyReport:['dailyReportSec'],
+  dashboardPro:['dashboardProSec','dashboardSec']
+};
+function safeOpenFeature(feature){
+  const ids=V602_FEATURE_TARGETS[feature]||[feature+'Sec',feature];
+  for(const id of ids){
+    const el=document.getElementById(id);
+    if(el){
+      if(typeof show==='function') show(id);
+      else{
+        document.querySelectorAll('.section,section[id]').forEach(s=>s.style.display='none');
+        el.style.display='block';
+      }
+      setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),80);
+      return true;
+    }
+  }
+  try{ toast('Розділ не знайдено або недоступний для ролі','warn'); }catch(e){}
+  return false;
+}
+function openRoleFeature(feature){ return safeOpenFeature(feature); }
+function v602RepairLayout(){
+  document.documentElement.style.overflowX='hidden';
+  document.body.style.overflowX='hidden';
+  document.querySelectorAll('table').forEach(t=>{
+    if(!t.parentElement.classList.contains('table-scroll')){
+      const w=document.createElement('div');
+      w.className='table-scroll';
+      t.parentNode.insertBefore(w,t);
+      w.appendChild(t);
+    }
+  });
+  document.querySelectorAll('a[href*="audit/export"]').forEach(a=>{
+    a.classList.add('audit-action');
+    if(!a.textContent.trim()){
+      if(a.href.includes('xlsx')) a.textContent='📄 Audit XLSX';
+      else if(a.href.includes('csv')) a.textContent='📄 Audit CSV';
+    }
+  });
+  document.querySelectorAll('.card,.dashboard-box,.section').forEach(el=>{
+    if(!el.textContent.trim() && el.children.length===0){
+      el.classList.add('empty-card-fixed');
+      el.textContent='—';
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(v602RepairLayout,500));
+window.addEventListener('resize',()=>setTimeout(v602RepairLayout,200));
