@@ -278,3 +278,17 @@ body.dark #toastBox.toast.warn{
 .tg-settings-grid label{display:block;padding:10px 0;font-weight:800;font-size:18px}
 #telegramPersonalSec input[type="checkbox"]{width:26px;height:26px;vertical-align:middle;margin-right:10px}
 #telegramPersonalSec .dashboard-box{min-height:95px}
+
+/* V5.7.2 Safe Fix */
+.tg-settings-grid label{display:block;padding:10px 0;font-weight:800;font-size:18px}
+
+/* V5.8.1 Traceability */
+.compat-ok,.compat-bad{padding:18px;border-radius:18px;font-size:28px;font-weight:1000;text-align:center;margin:12px 0}
+.compat-ok{background:#dcfce7;color:#166534}.compat-bad{background:#fee2e2;color:#991b1b}
+.critical-overlay{position:fixed;inset:0;background:rgba(127,0,0,.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px}
+.critical-box{max-width:760px;width:100%;background:#fff;color:#7f1d1d;border-radius:28px;padding:34px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,.4)}
+.critical-box h1{font-size:46px;margin:0 0 16px}.critical-box p{font-size:24px;font-weight:900}
+.critical-box button{font-size:22px;padding:14px 24px;border-radius:18px;border:0;background:#991b1b;color:white;font-weight:900}
+
+/* V5.9 Production Suite */
+#dailyReportResult pre{white-space:pre-wrap;font-family:inherit}.dashboard-number{font-size:30px;font-weight:1000}

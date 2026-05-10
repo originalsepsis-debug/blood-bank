@@ -522,3 +522,119 @@ async function pollTelegram(){
   loadTelegramMe();
 }
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{updatePWAStatus();loadTelegramMe();},500)});
+
+let barcodeCameraStream=null;
+async function startScanner(){
+  try{
+    const video=document.getElementById('scannerVideo');
+    barcodeCameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    video.srcObject=barcodeCameraStream;
+    await video.play();
+    toast('✅ Камеру запущено','good');
+    if('BarcodeDetector' in window){
+      const detector=new BarcodeDetector({formats:['qr_code','code_128','ean_13','ean_8','code_39']});
+      const loop=async()=>{
+        if(!barcodeCameraStream)return;
+        try{
+          const codes=await detector.detect(video);
+          if(codes&&codes.length){
+            document.getElementById('barcodeInput').value=codes[0].rawValue;
+            stopScanner(); barcodeLookup(); return;
+          }
+        }catch(e){}
+        requestAnimationFrame(loop);
+      };
+      loop();
+    }
+  }catch(e){toast('⚠️ Не вдалося запустити камеру','warn')}
+}
+function stopScanner(){
+  if(barcodeCameraStream){barcodeCameraStream.getTracks().forEach(t=>t.stop()); barcodeCameraStream=null}
+  let v=document.getElementById('scannerVideo'); if(v)v.srcObject=null;
+}
+function criticalOverlay(reason){
+  let old=document.getElementById('criticalOverlay'); if(old)old.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div id="criticalOverlay" class="critical-overlay"><div class="critical-box"><h1>🔴 НЕСУМІСНО</h1><p>${reason||''}</p><button onclick="document.getElementById('criticalOverlay').remove()">Закрити</button></div></div>`);
+}
+function htmlPackage(p){
+  if(!p)return '';
+  return `<div class="dashboard-grid"><div class="dashboard-box"><b>Компонент</b><br>${p.component||''}</div><div class="dashboard-box"><b>Група/Rh</b><br>${p.donor_group||''} ${p.donor_rh||''}</div><div class="dashboard-box"><b>Кількість</b><br>${p.amount||''}</div><div class="dashboard-box"><b>Термін</b><br>${p.expiry||''}</div><div class="dashboard-box"><b>QR</b><br>${p.qr_code||''}</div></div>`;
+}
+async function barcodeLookup(){
+  let code=val('barcodeInput'), box=document.getElementById('barcodeResult');
+  if(!code){toast('Введіть або відскануйте код','warn');return}
+  let r=await jpost('/api/barcode/scan',{code});
+  if(r.ok)box.innerHTML='<h3>Пакет знайдено</h3>'+htmlPackage(r.package);
+  else{box.innerHTML='<div class="notice">⚠️ '+(r.error||'Не знайдено')+'</div>'; toast(r.error||'Не знайдено','warn')}
+}
+async function barcodeIssueCheck(){
+  let code=val('barcodeInput'), request_id=val('barcodeRequestId'), box=document.getElementById('barcodeResult');
+  if(!code||!request_id){toast('Потрібен код і ID вимоги','warn');return}
+  let r=await jpost('/api/barcode/issue-check',{code,request_id});
+  if(r.compatible){box.innerHTML='<div class="compat-ok">✅ СУМІСНО</div>'+htmlPackage(r.package);toast('✅ Сумісно','good')}
+  else{box.innerHTML='<div class="compat-bad">🔴 НЕСУМІСНО: '+(r.reason||r.error||'')+'</div>'+htmlPackage(r.package);criticalOverlay(r.reason||r.error)}
+}
+async function barcodeIssue(){
+  let code=val('barcodeInput'), request_id=val('barcodeRequestId'), box=document.getElementById('barcodeResult');
+  let r=await jpost('/api/barcode/issue',{code,request_id});
+  if(r.ok){box.innerHTML='<div class="compat-ok">✅ ВИДАНО</div>';toast('✅ Пакет видано','good')}
+  else{if(r.red_alert)criticalOverlay(r.reason||r.error);toast(r.reason||r.error||'Не вдалося видати','warn')}
+}
+async function loadTraceability(){
+  let code=val('traceCode'), box=document.getElementById('traceabilityResult');
+  let d=await jget('/api/traceability/package/'+encodeURIComponent(code));
+  box.innerHTML='<div class="table-scroll"><table><tr><th>Дата</th><th>Дія</th><th>Пацієнт</th><th>Вимога</th><th>Користувач</th><th>Примітка</th></tr>'+d.map(x=>`<tr><td>${x.created_at||''}</td><td>${x.action_type||''}</td><td>${x.patient_name||''}</td><td>${x.request_id||''}</td><td>${x.user_name||''}</td><td>${x.notes||''}</td></tr>`).join('')+'</table></div>';
+}
+async function loadIncompatibilities(){
+  let box=document.getElementById('incompatibilityResult');
+  let d=await jget('/api/incompatibility');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>Дата</th><th>Пацієнт</th><th>Пацієнт</th><th>Донор</th><th>Компонент</th><th>Причина</th></tr>'+d.map(x=>`<tr><td>${x.created_at||''}</td><td>${x.patient_name||''}</td><td>${x.patient_group||''} ${x.patient_rh||''}</td><td>${x.donor_group||''} ${x.donor_rh||''}</td><td>${x.component||''}</td><td>${x.reason||''}</td></tr>`).join('')+'</table></div>';
+}
+
+async function loadDashboardPro(){
+  let box=document.getElementById('dashboardProBox'); if(!box)return;
+  let d=await jget('/api/dashboard/pro');
+  box.innerHTML=`<div class="dashboard-grid">
+    <div class="dashboard-box"><b>Видано сьогодні</b><br><span class="dashboard-number">${d.issued_today||0}</span></div>
+    <div class="dashboard-box"><b>Списано сьогодні</b><br><span class="dashboard-number">${d.writeoffs_today||0}</span></div>
+    <div class="dashboard-box"><b>Несумісності</b><br><span class="dashboard-number">${d.incompat_today||0}</span></div>
+    <div class="dashboard-box"><b>Активні вимоги</b><br><span class="dashboard-number">${d.active_requests||0}</span></div>
+    <div class="dashboard-box"><b>Склад</b><br><span class="dashboard-number">${d.stock_items||0}</span></div>
+    <div class="dashboard-box"><b>Темп. тривоги</b><br><span class="dashboard-number">${d.temperature_alerts_today||0}</span></div>
+  </div>`;
+}
+async function saveTemperature(){
+  let r=await jpost('/api/temperature/add',{fridge_name:val('fridgeName'),temperature:val('fridgeTemp'),notes:val('fridgeNotes')});
+  toast(r.ok?(r.alert?'🌡️ Збережено. Є тривога':'✅ Температуру збережено'):(r.error||'Помилка'),r.ok?'good':'warn');
+  loadTemperature();
+}
+async function loadTemperature(){
+  let box=document.getElementById('temperatureResult'); if(!box)return;
+  let d=await jget('/api/temperature');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>Дата</th><th>Холодильник</th><th>Темп.</th><th>Користувач</th><th>Alert</th><th>Примітка</th></tr>'+
+    d.map(x=>`<tr><td>${x.created_at||''}</td><td>${x.fridge_name||''}</td><td>${x.temperature||''}</td><td>${x.entered_by||''}</td><td>${x.alert_triggered?'🔴':'✅'}</td><td>${x.notes||''}</td></tr>`).join('')+'</table></div>';
+}
+async function saveWriteoff(){
+  let r=await jpost('/api/writeoff',{package_code:val('writeoffCode'),reason:val('writeoffReason'),notes:val('writeoffNotes')});
+  toast(r.ok?'✅ Списано':(r.error||'Помилка списання'),r.ok?'good':'warn');
+  loadWriteoffs();
+}
+async function loadWriteoffs(){
+  let box=document.getElementById('writeoffResult'); if(!box)return;
+  let d=await jget('/api/writeoffs');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>Дата</th><th>Код</th><th>Компонент</th><th>К-сть</th><th>Причина</th><th>Хто</th></tr>'+
+    d.map(x=>`<tr><td>${x.created_at||''}</td><td>${x.package_code||''}</td><td>${x.component||''}</td><td>${x.amount||''}</td><td>${x.reason||''}</td><td>${x.written_by||''}</td></tr>`).join('')+'</table></div>';
+}
+async function sendDailyReport(){
+  let r=await jpost('/api/telegram/daily-report',{});
+  let box=document.getElementById('dailyReportResult');
+  if(box)box.innerHTML='<pre class="notice">'+(r.report||r.error||'')+'</pre>';
+  toast(r.ok?'✅ Добовий звіт сформовано':'⚠️ '+(r.error||'Помилка'),r.ok?'good':'warn');
+}
+async function loadDailyReports(){
+  let box=document.getElementById('dailyReportResult'); if(!box)return;
+  let d=await jget('/api/daily-reports');
+  box.innerHTML='<div class="table-scroll"><table><tr><th>Дата</th><th>Тип</th><th>Telegram</th><th>Текст</th></tr>'+
+    d.map(x=>`<tr><td>${x.created_at||''}</td><td>${x.report_type||''}</td><td>${x.sent_telegram?'✅':'—'}</td><td><pre>${x.report_text||''}</pre></td></tr>`).join('')+'</table></div>';
+}
+document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{loadDashboardPro&&loadDashboardPro();},800)});

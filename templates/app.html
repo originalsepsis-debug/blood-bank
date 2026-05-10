@@ -1,4 +1,4 @@
-<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V5.7.1</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a></header><main class="container"><div id="offlineStatus" class="notice hidden"></div><section class="stats"><div class="stat red">Еритроцитарні компоненти <b id="rbcStat">0</b></div><div class="stat yellow">Плазма <b id="plasmaStat">0</b></div><div class="stat blue">Тромбоцити <b id="pltStat">0</b></div><div class="stat purple">Кріопреципітат <b id="cryoStat">0</b></div><div class="stat dark">Критичні залишки <b id="lowStat">0</b></div></section><nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button onclick="show('stockSec')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button onclick="show('patientsSec')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram система</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('pwaInstallSec')">PWA</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button></nav><section id="requestsSec" class="card section active"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid"><input id="patient_name" placeholder="ПІБ пацієнта"><input id="birth_date" type="date"><input id="address" placeholder="Адреса"><input id="patient_status" placeholder="Статус пацієнта"><input id="department" placeholder="Відділення"><select id="component">
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V5.9.2</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a></header><main class="container"><div id="offlineStatus" class="notice hidden"></div><section class="stats"><div class="stat red">Еритроцитарні компоненти <b id="rbcStat">0</b></div><div class="stat yellow">Плазма <b id="plasmaStat">0</b></div><div class="stat blue">Тромбоцити <b id="pltStat">0</b></div><div class="stat purple">Кріопреципітат <b id="cryoStat">0</b></div><div class="stat dark">Критичні залишки <b id="lowStat">0</b></div></section><nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button onclick="show('stockSec')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button onclick="show('patientsSec')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram система</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('pwaInstallSec')">PWA</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button><button onclick="show('barcodeSec')">QR/Barcode</button><button onclick="show('traceabilitySec')">Traceability</button><button onclick="show('incompatSec')">Несумісності</button><button onclick="show('dashboardProSec')">Dashboard PRO</button><button onclick="show('temperatureSec')">Температура</button><button onclick="show('writeoffSec')">Списання</button><button onclick="show('dailyReportSec')">Добові звіти</button></nav><section id="requestsSec" class="card section active"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid"><input id="patient_name" placeholder="ПІБ пацієнта"><input id="birth_date" type="date"><input id="address" placeholder="Адреса"><input id="patient_status" placeholder="Статус пацієнта"><input id="department" placeholder="Відділення"><select id="component">
 <option value="">Виберіть компонент</option>
 <option>Еритроцитарні компоненти</option>
 <option>Плазма</option>
@@ -121,7 +121,6 @@ PWA відкриває сайт як окремий додаток без адр
 </div>
 </section>
 
-
 <section id="telegramPersonalSec" class="card section">
 <h2>Мій Telegram</h2>
 <div class="notice">Натисніть «Підключити Telegram», відкрийте бота і натисніть START.</div>
@@ -143,6 +142,88 @@ PWA відкриває сайт як окремий додаток без адр
 </div>
 <button class="btn-green" onclick="saveTelegramMeSettings()">Зберегти налаштування</button>
 <div class="notice">Команди бота: <b>/stock</b>, <b>/critical</b>, <b>/requests</b>, <b>/expiring</b></div>
+</section>
+
+<section id="barcodeSec" class="card section">
+<h2>QR / Barcode: склад → видача</h2>
+<div class="notice">Скануйте QR/штрихкод пакета. Для видачі вкажіть ID вимоги.</div>
+<video id="scannerVideo" playsinline style="width:100%;max-height:320px;border-radius:18px;background:#111"></video>
+<div class="actions-row">
+<button class="btn-green" onclick="startScanner()">▶ Запустити камеру</button>
+<button class="btn-orange" onclick="stopScanner()">■ Зупинити</button>
+</div>
+<div class="grid2">
+<input id="barcodeInput" placeholder="QR / Barcode пакета">
+<input id="barcodeRequestId" placeholder="ID вимоги">
+</div>
+<div class="actions-row">
+<button class="btn-blue" onclick="barcodeLookup()">Знайти пакет</button>
+<button class="btn-orange" onclick="barcodeIssueCheck()">Перевірити сумісність</button>
+<button class="btn-green" onclick="barcodeIssue()">Видати</button>
+</div>
+<div id="barcodeResult"></div>
+</section>
+
+<section id="traceabilitySec" class="card section">
+<h2>Traceability пакета</h2>
+<div class="grid2">
+<input id="traceCode" placeholder="QR / Barcode / номер пакета">
+<button class="btn-blue" onclick="loadTraceability()">Показати історію</button>
+</div>
+<div id="traceabilityResult"></div>
+</section>
+
+<section id="incompatSec" class="card section">
+<h2>Журнал несумісностей</h2>
+<div class="actions-row">
+<button class="btn-blue" onclick="loadIncompatibilities()">Оновити</button>
+</div>
+<div id="incompatibilityResult"></div>
+</section>
+
+<section id="dashboardProSec" class="card section">
+<h2>Dashboard PRO</h2>
+<div id="dashboardProBox"></div>
+<button class="btn-blue" onclick="loadDashboardPro()">Оновити</button>
+</section>
+
+<section id="temperatureSec" class="card section">
+<h2>Температурний журнал</h2>
+<div class="grid2">
+<input id="fridgeName" placeholder="Холодильник / морозильник">
+<input id="fridgeTemp" type="number" step="0.1" placeholder="Температура °C">
+</div>
+<input id="fridgeNotes" placeholder="Примітка">
+<button class="btn-green" onclick="saveTemperature()">Зберегти температуру</button>
+<div id="temperatureResult"></div>
+</section>
+
+<section id="writeoffSec" class="card section">
+<h2>Списання компонента</h2>
+<div class="grid2">
+<input id="writeoffCode" placeholder="QR / Barcode / номер пакета">
+<select id="writeoffReason">
+<option value="">Причина списання</option>
+<option>Прострочено</option>
+<option>Пошкоджено</option>
+<option>Гемоліз</option>
+<option>Повернуто невикористаним</option>
+<option>Порушення температурного режиму</option>
+<option>Інше</option>
+</select>
+</div>
+<input id="writeoffNotes" placeholder="Примітка">
+<button class="btn-orange" onclick="saveWriteoff()">Списати</button>
+<div id="writeoffResult"></div>
+</section>
+
+<section id="dailyReportSec" class="card section">
+<h2>Добові Telegram звіти</h2>
+<div class="actions-row">
+<button class="btn-green" onclick="sendDailyReport()">Надіслати добовий звіт</button>
+<button class="btn-blue" onclick="loadDailyReports()">Історія звітів</button>
+</div>
+<div id="dailyReportResult"></div>
 </section>
 
 </main><script>window.APP={role:"{{user.role}}",csrf:"{{csrf}}"};</script><script src="/static/shared.js"></script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/service-worker.js').catch(()=>{})}</script></body></html>

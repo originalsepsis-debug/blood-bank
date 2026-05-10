@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.7.1"
+APP_TITLE = "Банк крові V5.9.2"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -824,7 +824,7 @@ def telegram_process_update(update):
         return f"error: {e}"
 
 
-def ensure_telegram_user_columns():
+def ensure_telegram_user_columns_safe():
     cols = [
         ("telegram_chat_id", "TEXT"),
         ("telegram_username", "TEXT"),
@@ -844,6 +844,9 @@ def ensure_telegram_user_columns():
 
 @app.before_request
 def before():
+    # V592_CSRF_EXEMPT_SECURITY_LOGIN_ATTEMPT
+    if request.path == "/api/security/login-attempt":
+        return None
     if REQUIRE_HTTPS and request.headers.get("X-Forwarded-Proto","https") != "https":
         return redirect(request.url.replace("http://","https://"), code=301)
     ip = request.headers.get("X-Forwarded-For", request.remote_addr or "local").split(",")[0]
@@ -897,6 +900,11 @@ def role_required(*roles):
 
 @app.route("/")
 def index():
+    # V572_SAFE_INDEX
+    try:
+        safe_startup_check()
+    except Exception:
+        pass
     # V565_INDEX_ADMIN_BOOTSTRAP
     try:
         ensure_default_admin()
@@ -911,9 +919,14 @@ def index():
 
 @app.post("/login")
 def login():
+    # V572_SAFE_LOGIN
+    try:
+        safe_startup_check()
+    except Exception:
+        pass
     # V571_LOGIN_TELEGRAM_MIGRATION
     try:
-        ensure_telegram_user_columns()
+        ensure_telegram_user_columns_safe()
     except Exception:
         pass
     # V565_LOGIN_ADMIN_BOOTSTRAP
@@ -1566,7 +1579,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.7.1")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.2")
 
 
 @app.get("/api/telegram/status")
@@ -1689,7 +1702,7 @@ def api_admin_bootstrap_browser():
 @login_required
 def api_telegram_me():
     try:
-        ensure_telegram_user_columns()
+        ensure_telegram_user_columns_safe()
         u=current_user()
         link=telegram_link_url(u)
         return jsonify(ok=True,
@@ -1712,7 +1725,7 @@ def api_telegram_me():
 @login_required
 def api_telegram_me_settings():
     try:
-        ensure_telegram_user_columns()
+        ensure_telegram_user_columns_safe()
         u=current_user()
         d=request.json or {}
         execute("""UPDATE users SET telegram_enabled=?, telegram_notify_new_requests=?, telegram_notify_critical=?,
@@ -1760,6 +1773,512 @@ def api_telegram_poll():
         return jsonify(ok=True, processed=count)
     except Exception as e:
         return jsonify(ok=False,error=str(e)), 500
+
+
+def ensure_telegram_user_columns_safe():
+    try:
+        cols = [
+            ("telegram_chat_id","TEXT"),
+            ("telegram_username","TEXT"),
+            ("telegram_enabled","INTEGER"),
+            ("telegram_notify_new_requests","INTEGER"),
+            ("telegram_notify_critical","INTEGER"),
+            ("telegram_notify_expiring","INTEGER"),
+            ("telegram_notify_reactions","INTEGER"),
+            ("telegram_notify_backups","INTEGER"),
+        ]
+        for name, typ in cols:
+            try:
+                execute(f"ALTER TABLE users ADD COLUMN {name} {typ}")
+            except Exception:
+                pass
+        for name, val in {
+            "telegram_enabled":0,
+            "telegram_notify_new_requests":1,
+            "telegram_notify_critical":1,
+            "telegram_notify_expiring":1,
+            "telegram_notify_reactions":1,
+            "telegram_notify_backups":0,
+        }.items():
+            try:
+                execute(f"UPDATE users SET {name}=? WHERE {name} IS NULL", (val,))
+            except Exception:
+                pass
+        return True
+    except Exception as e:
+        try: print("TELEGRAM_SAFE_MIGRATION_ERROR:", e)
+        except Exception: pass
+        return False
+
+def safe_startup_check():
+    errors=[]
+    for fn_name in ["ensure_telegram_user_columns_safe","ensure_default_admin","run_db_indexes"]:
+        try:
+            fn=globals().get(fn_name)
+            if fn: fn()
+        except Exception as e:
+            errors.append(fn_name + ":" + str(e))
+    if errors:
+        try: print("SAFE_STARTUP_ERRORS:", " | ".join(errors))
+        except Exception: pass
+    try:
+        ensure_traceability_tables()
+    except Exception as e:
+        errors.append('traceability:' + str(e))
+    try:
+        ensure_v59_tables()
+    except Exception as e:
+        errors.append('v59:' + str(e))
+    return errors
+
+
+# V592_LOGIN_ATTEMPTS_MIGRATION_MARKER: ALTER TABLE login_attempts ADD COLUMN ip_address
+
+def ensure_login_attempts_columns_v592():
+    try:
+        execute("""CREATE TABLE IF NOT EXISTS login_attempts(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            username TEXT,
+            ip_address TEXT,
+            ok INTEGER DEFAULT 0,
+            user_agent TEXT
+        )""")
+    except Exception:
+        pass
+    for col, typ in [
+        ("created_at","TEXT"),
+        ("username","TEXT"),
+        ("ip_address","TEXT"),
+        ("ok","INTEGER DEFAULT 0"),
+        ("user_agent","TEXT")
+    ]:
+        try:
+            execute(f"ALTER TABLE login_attempts ADD COLUMN {col} {typ}")
+        except Exception:
+            pass
+    return True
+
+@app.get("/api/health-debug")
+def api_health_debug():
+    out={"ok":False,"version":"V5.7.2"}
+    try:
+        out["select"]=row("SELECT 1 AS ok")
+        out["migrations"]=safe_startup_check()
+        out["admins"]=len(rows("SELECT id FROM users WHERE role='admin' AND active=1"))
+        out["ok"]=True
+    except Exception as e:
+        out["error"]=str(e)
+    return jsonify(out), (200 if out.get("ok") else 500)
+
+
+@app.errorhandler(500)
+def v572_error_page(e):
+    try: print("V572_500:", e)
+    except Exception: pass
+    return render_template("login.html", error="Помилка сервера. Відкрий /api/health-debug або Render Logs."), 500
+
+
+# ================= V5.8.1 TRACEABILITY CORE =================
+def ensure_traceability_tables():
+    try:
+        execute("""CREATE TABLE IF NOT EXISTS incompatibility_log(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            request_id INTEGER,
+            patient_name TEXT,
+            patient_group TEXT,
+            patient_rh TEXT,
+            donor_group TEXT,
+            donor_rh TEXT,
+            component TEXT,
+            reason TEXT,
+            override_used INTEGER DEFAULT 0,
+            issued_by TEXT,
+            workstation TEXT,
+            ip_address TEXT,
+            notes TEXT
+        )""")
+    except Exception:
+        pass
+    try:
+        execute("""CREATE TABLE IF NOT EXISTS package_traceability(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            package_code TEXT,
+            action_type TEXT,
+            patient_name TEXT,
+            request_id INTEGER,
+            user_name TEXT,
+            department TEXT,
+            created_at TEXT,
+            notes TEXT
+        )""")
+    except Exception:
+        pass
+    return True
+
+def _v581_user_name():
+    try:
+        return current_user().get("username","")
+    except Exception:
+        return "system"
+
+def log_traceability(package_code, action_type, patient_name="", request_id=None, department="", notes=""):
+    ensure_traceability_tables()
+    try:
+        execute("""INSERT INTO package_traceability(package_code,action_type,patient_name,request_id,user_name,department,created_at,notes)
+                   VALUES(?,?,?,?,?,?,?,?)""",
+                (package_code or "", action_type or "", patient_name or "", request_id, _v581_user_name(), department or "", now(), notes or ""))
+        return True
+    except Exception as e:
+        try: print("TRACEABILITY_LOG_ERROR:", e)
+        except Exception: pass
+        return False
+
+def log_incompatibility(request_id, req, donor_group, donor_rh, component, reason, override_used=0, notes=""):
+    ensure_traceability_tables()
+    try:
+        execute("""INSERT INTO incompatibility_log(created_at,request_id,patient_name,patient_group,patient_rh,donor_group,donor_rh,component,reason,override_used,issued_by,workstation,ip_address,notes)
+                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (now(), request_id, req.get("patient_name",""), req.get("patient_group",""), req.get("patient_rh",""),
+                 donor_group or "", donor_rh or "", component or req.get("component",""), reason or "", 1 if override_used else 0,
+                 _v581_user_name(), request.headers.get("User-Agent","")[:500], request.remote_addr or "", notes or ""))
+        try:
+            telegram_broadcast_roles(
+                f"🔴 <b>НЕСУМІСНІСТЬ</b>\nПацієнт: {req.get('patient_name','')}\nКомпонент: {component or req.get('component','')}\nПацієнт: {req.get('patient_group','')} {req.get('patient_rh','')}\nДонор: {donor_group} {donor_rh}\nПричина: {reason}",
+                ("admin","transfusion"), "critical", True
+            )
+        except Exception:
+            pass
+        return True
+    except Exception as e:
+        try: print("INCOMPATIBILITY_LOG_ERROR:", e)
+        except Exception: pass
+        return False
+
+def barcode_find_package(code):
+    code = str(code or "").strip()
+    if not code:
+        return None
+    try:
+        return row("SELECT * FROM stock_entries WHERE qr_code=? OR pack_no=? OR series=? ORDER BY id DESC LIMIT 1", (code, code, code))
+    except Exception:
+        return None
+
+@app.get("/api/incompatibility")
+@role_required("admin","transfusion")
+def api_incompatibility_list():
+    ensure_traceability_tables()
+    return jsonify(rows("SELECT * FROM incompatibility_log ORDER BY id DESC LIMIT 500"))
+
+@app.get("/api/traceability/package/<code>")
+@login_required
+def api_traceability_package(code):
+    ensure_traceability_tables()
+    return jsonify(rows("SELECT * FROM package_traceability WHERE package_code=? ORDER BY id DESC LIMIT 200", (code,)))
+
+@app.post("/api/traceability/log")
+@login_required
+def api_traceability_log():
+    d = request.json or {}
+    ok = log_traceability(d.get("package_code") or d.get("qr_code"), d.get("action_type"), d.get("patient_name",""), d.get("request_id"), d.get("department",""), d.get("notes",""))
+    return jsonify(ok=ok)
+
+@app.post("/api/barcode/scan")
+@login_required
+def api_barcode_scan():
+    d = request.json or {}
+    code = (d.get("code") or d.get("barcode") or d.get("qr_code") or "").strip()
+    if not code:
+        return jsonify(ok=False,error="Немає QR/штрихкоду"), 400
+    pkg = barcode_find_package(code)
+    if not pkg:
+        return jsonify(ok=False,error="Пакет не знайдено", code=code), 404
+    log_traceability(code, "scan", pkg.get("patient_name",""), None, "", "barcode scan")
+    return jsonify(ok=True, package=pkg, code=code)
+
+@app.post("/api/barcode/issue-check")
+@login_required
+def api_barcode_issue_check():
+    d = request.json or {}
+    request_id = int(d.get("request_id") or 0)
+    code = (d.get("code") or d.get("barcode") or d.get("qr_code") or "").strip()
+    req = row("SELECT * FROM requests WHERE id=?", (request_id,))
+    pkg = barcode_find_package(code)
+    if not req:
+        return jsonify(ok=False,error="Вимогу не знайдено"), 404
+    if not pkg:
+        return jsonify(ok=False,error="Пакет не знайдено"), 404
+    donor_group = pkg.get("donor_group","")
+    donor_rh = pkg.get("donor_rh","")
+    reasons = []
+    try:
+        if not abo_compatible(donor_group, req.get("patient_group","")):
+            reasons.append("ABO несумісність")
+    except Exception:
+        if donor_group != req.get("patient_group",""):
+            reasons.append("ABO несумісність")
+    if donor_rh and req.get("patient_rh") and donor_rh != req.get("patient_rh"):
+        reasons.append("Rh відмінність")
+    try:
+        if pkg.get("expiry") and pkg.get("expiry") < datetime.now().strftime("%Y-%m-%d"):
+            reasons.append("Пакет прострочений")
+    except Exception:
+        pass
+    if reasons:
+        reason = "; ".join(reasons)
+        log_incompatibility(request_id, req, donor_group, donor_rh, pkg.get("component",""), reason, 0, "barcode issue-check")
+        return jsonify(ok=False, compatible=False, red_alert=True, reason=reason, request=req, package=pkg)
+    log_traceability(code, "issue_check_ok", req.get("patient_name",""), request_id, req.get("department",""), "compatible")
+    return jsonify(ok=True, compatible=True, reason="Сумісно", request=req, package=pkg)
+
+@app.post("/api/barcode/issue")
+@role_required("admin","transfusion")
+def api_barcode_issue():
+    d = request.json or {}
+    request_id = int(d.get("request_id") or 0)
+    code = (d.get("code") or d.get("barcode") or d.get("qr_code") or "").strip()
+    req = row("SELECT * FROM requests WHERE id=?", (request_id,))
+    pkg = barcode_find_package(code)
+    if not req or not pkg:
+        return jsonify(ok=False,error="Не знайдено вимогу або пакет"), 404
+    donor_group = pkg.get("donor_group","")
+    donor_rh = pkg.get("donor_rh","")
+    reasons = []
+    try:
+        if not abo_compatible(donor_group, req.get("patient_group","")):
+            reasons.append("ABO несумісність")
+    except Exception:
+        if donor_group != req.get("patient_group",""):
+            reasons.append("ABO несумісність")
+    if donor_rh and req.get("patient_rh") and donor_rh != req.get("patient_rh"):
+        reasons.append("Rh відмінність")
+    if reasons and not d.get("override"):
+        reason = "; ".join(reasons)
+        log_incompatibility(request_id, req, donor_group, donor_rh, pkg.get("component",""), reason, 0, "barcode issue")
+        return jsonify(ok=False, compatible=False, red_alert=True, reason=reason)
+    execute("UPDATE requests SET status=?, donor_group=?, donor_rh=?, pack_no=?, series=?, expiry=? WHERE id=?",
+            ("видано", donor_group, donor_rh, pkg.get("pack_no",""), pkg.get("series",""), pkg.get("expiry",""), request_id))
+    log_traceability(code, "issued", req.get("patient_name",""), request_id, req.get("department",""), "barcode issue")
+    audit("barcode_issue", f"request={request_id}; barcode={code}")
+    return jsonify(ok=True, issued=True)
+# ================= END V5.8.1 TRACEABILITY CORE =================
+
+
+# ================= V5.9 PRODUCTION TRACEABILITY SUITE =================
+def ensure_v59_tables():
+    try:
+        ensure_traceability_tables()
+    except Exception:
+        pass
+    for sql in [
+        """CREATE TABLE IF NOT EXISTS fridge_temperature_log(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fridge_name TEXT,
+            temperature REAL,
+            entered_by TEXT,
+            created_at TEXT,
+            alert_triggered INTEGER DEFAULT 0,
+            notes TEXT
+        )""",
+        """CREATE TABLE IF NOT EXISTS component_writeoffs(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            package_code TEXT,
+            component TEXT,
+            amount REAL,
+            reason TEXT,
+            written_by TEXT,
+            notes TEXT
+        )""",
+        """CREATE TABLE IF NOT EXISTS daily_reports(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            report_type TEXT,
+            report_text TEXT,
+            sent_telegram INTEGER DEFAULT 0
+        )""",
+        """CREATE TABLE IF NOT EXISTS login_attempts(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            username TEXT,
+            ip_address TEXT,
+            ok INTEGER DEFAULT 0,
+            user_agent TEXT
+        )""",
+        """CREATE TABLE IF NOT EXISTS device_sessions(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            username TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            event_type TEXT
+        )"""
+    ]:
+        try: execute(sql)
+        except Exception: pass
+    return True
+
+def v59_today():
+    return datetime.now().strftime("%Y-%m-%d")
+
+def v59_scalar(sql, params=()):
+    try:
+        r=row(sql, params)
+        if not r: return 0
+        return list(r.values())[0]
+    except Exception:
+        return 0
+
+def v59_dashboard_stats():
+    ensure_v59_tables()
+    today=v59_today()
+    return {
+        "issued_today": v59_scalar("SELECT COUNT(*) FROM requests WHERE status LIKE ? AND created_at LIKE ?", ("%видано%", today+"%")),
+        "used_today": v59_scalar("SELECT COUNT(*) FROM requests WHERE status LIKE ? AND created_at LIKE ?", ("%використ%", today+"%")),
+        "writeoffs_today": v59_scalar("SELECT COUNT(*) FROM component_writeoffs WHERE created_at LIKE ?", (today+"%",)),
+        "incompat_today": v59_scalar("SELECT COUNT(*) FROM incompatibility_log WHERE created_at LIKE ?", (today+"%",)),
+        "active_requests": v59_scalar("SELECT COUNT(*) FROM requests WHERE status NOT LIKE ? AND status NOT LIKE ? AND status NOT LIKE ?", ("%відмов%", "%списан%", "%використ%")),
+        "stock_items": v59_scalar("SELECT COUNT(*) FROM stock_entries"),
+        "temperature_alerts_today": v59_scalar("SELECT COUNT(*) FROM fridge_temperature_log WHERE alert_triggered=1 AND created_at LIKE ?", (today+"%",))
+    }
+
+def v59_daily_report_text():
+    s=v59_dashboard_stats()
+    lines=[
+        "📊 <b>Добовий звіт банку крові</b>",
+        f"Дата: {v59_today()}",
+        f"📦 Записів складу: {s.get('stock_items',0)}",
+        f"📋 Активні вимоги: {s.get('active_requests',0)}",
+        f"✅ Видано сьогодні: {s.get('issued_today',0)}",
+        f"♻️ Списано сьогодні: {s.get('writeoffs_today',0)}",
+        f"🔴 Несумісності сьогодні: {s.get('incompat_today',0)}",
+        f"🌡️ Температурні тривоги: {s.get('temperature_alerts_today',0)}",
+    ]
+    try:
+        al=get_alerts_data()
+        lines.append(f"⚠️ Критичні залишки: {len(al.get('low',[]))}")
+        lines.append(f"⏰ Близькі терміни: {len(al.get('expiry',[]))}")
+    except Exception:
+        pass
+    return "\n".join(lines)
+
+@app.get("/api/dashboard/pro")
+@login_required
+def api_dashboard_pro():
+    return jsonify(v59_dashboard_stats())
+
+@app.post("/api/temperature/add")
+@login_required
+def api_temperature_add():
+    ensure_v59_tables()
+    d=request.json or {}
+    fridge=(d.get("fridge_name") or d.get("fridge") or "").strip()
+    if not fridge:
+        return jsonify(ok=False,error="Вкажіть холодильник"),400
+    try:
+        temp=float(str(d.get("temperature")).replace(",","."))
+    except Exception:
+        return jsonify(ok=False,error="Температура має бути числом"),400
+    alert=1 if temp>6 or temp< -35 else 0
+    execute("INSERT INTO fridge_temperature_log(fridge_name,temperature,entered_by,created_at,alert_triggered,notes) VALUES(?,?,?,?,?,?)",
+            (fridge,temp,_v581_user_name(),now(),alert,d.get("notes","")))
+    if alert:
+        try:
+            telegram_broadcast_roles(f"🌡️ <b>Температурна тривога</b>\n{fridge}: {temp}°C", ("admin","transfusion"), "critical", True)
+        except Exception: pass
+    return jsonify(ok=True, alert=bool(alert))
+
+@app.get("/api/temperature")
+@login_required
+def api_temperature_list():
+    ensure_v59_tables()
+    return jsonify(rows("SELECT * FROM fridge_temperature_log ORDER BY id DESC LIMIT 500"))
+
+@app.post("/api/writeoff")
+@role_required("admin","transfusion")
+def api_writeoff_component():
+    ensure_v59_tables()
+    d=request.json or {}
+    code=(d.get("package_code") or d.get("qr_code") or "").strip()
+    reason=(d.get("reason") or "").strip()
+    if not code: return jsonify(ok=False,error="Вкажіть код пакета"),400
+    if not reason: return jsonify(ok=False,error="Вкажіть причину списання"),400
+    pkg=barcode_find_package(code)
+    component=pkg.get("component","") if pkg else d.get("component","")
+    amount=float(pkg.get("amount") or d.get("amount") or 0) if (pkg or d.get("amount")) else 0
+    execute("INSERT INTO component_writeoffs(created_at,package_code,component,amount,reason,written_by,notes) VALUES(?,?,?,?,?,?,?)",
+            (now(),code,component,amount,reason,_v581_user_name(),d.get("notes","")))
+    try:
+        execute("UPDATE stock_entries SET amount=0,note=? WHERE qr_code=? OR pack_no=? OR series=?", (f"Списано: {reason}",code,code,code))
+    except Exception: pass
+    log_traceability(code,"writeoff","",None,"",reason)
+    audit("component_writeoff", f"{code}: {reason}")
+    return jsonify(ok=True)
+
+@app.get("/api/writeoffs")
+@role_required("admin","transfusion")
+def api_writeoffs():
+    ensure_v59_tables()
+    return jsonify(rows("SELECT * FROM component_writeoffs ORDER BY id DESC LIMIT 500"))
+
+@app.get("/api/traceability/search")
+@login_required
+def api_traceability_search():
+    ensure_v59_tables()
+    q=(request.args.get("q") or "").strip()
+    if not q: return jsonify([])
+    like="%"+q+"%"
+    return jsonify(rows("""SELECT * FROM package_traceability
+                           WHERE package_code LIKE ? OR patient_name LIKE ? OR notes LIKE ?
+                           ORDER BY id DESC LIMIT 300""",(like,like,like)))
+
+@app.post("/api/telegram/daily-report")
+@role_required("admin","transfusion")
+def api_telegram_daily_report():
+    ensure_v59_tables()
+    text=v59_daily_report_text()
+    sent=0
+    try:
+        sent=telegram_broadcast_roles(text,("admin","transfusion"),"report",True)
+    except Exception:
+        sent=0
+    execute("INSERT INTO daily_reports(created_at,report_type,report_text,sent_telegram) VALUES(?,?,?,?)",
+            (now(),"daily",text,1 if sent else 0))
+    return jsonify(ok=True, sent=sent, report=text)
+
+@app.get("/api/daily-reports")
+@role_required("admin","transfusion")
+def api_daily_reports():
+    ensure_v59_tables()
+    return jsonify(rows("SELECT * FROM daily_reports ORDER BY id DESC LIMIT 100"))
+
+@app.post("/api/security/login-attempt")
+def api_security_login_attempt():
+    try:
+        ensure_login_attempts_columns_v592()
+        d=request.json or {}
+        execute("INSERT INTO login_attempts(created_at,username,ip_address,ok,user_agent) VALUES(?,?,?,?,?)",
+                (now(),str(d.get("username",""))[:120],request.remote_addr or "",1 if d.get("ok") else 0,request.headers.get("User-Agent","")[:500]))
+        return jsonify(ok=True)
+    except Exception as e:
+        return jsonify(ok=False,error=f"login attempt log error: {str(e)}"), 500
+
+@app.get("/api/security/login-attempts")
+@role_required("admin")
+def api_security_login_attempts():
+    ensure_v59_tables()
+    return jsonify(rows("SELECT * FROM login_attempts ORDER BY id DESC LIMIT 300"))
+# ================= END V5.9 PRODUCTION TRACEABILITY SUITE =================
+
+
+@app.get("/api/security/login-attempt-test")
+def api_security_login_attempt_test():
+    try:
+        ensure_login_attempts_columns_v592()
+        return jsonify(ok=True, count=len(rows("SELECT id FROM login_attempts LIMIT 5")))
+    except Exception as e:
+        return jsonify(ok=False,error=str(e)),500
 
 @app.get("/manifest.json")
 def manifest():
