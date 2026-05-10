@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V5.9.3"
+APP_TITLE = "Банк крові V5.9.4"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -81,6 +81,23 @@ def sql_convert(sql):
     if IS_POSTGRES:
         return sql.replace("?", "%s")
     return sql
+
+
+# ================= V5.9.4 POSTGRES TRANSACTION RECOVERY =================
+def db_rollback_safe():
+    try:
+        conn = get_db()
+        conn.rollback()
+    except Exception:
+        pass
+
+def db_commit_safe():
+    try:
+        conn = get_db()
+        conn.commit()
+    except Exception:
+        pass
+# ================= END V5.9.4 POSTGRES TRANSACTION RECOVERY =================
 
 def execute(sql, params=()):
     if IS_POSTGRES:
@@ -353,6 +370,7 @@ def init_db():
         try:
             execute(col_sql)
         except Exception:
+            db_rollback_safe()
             pass
 
     ensure_default_admin()
@@ -682,12 +700,14 @@ def ensure_default_admin():
         try:
             audit("admin_bootstrap", "Default admin Sepsis created")
         except Exception:
+            db_rollback_safe()
             pass
         return True
     except Exception as e:
         try:
             print("ADMIN_BOOTSTRAP_ERROR:", e)
         except Exception:
+            db_rollback_safe()
             pass
         return False
 
@@ -839,6 +859,7 @@ def ensure_telegram_user_columns_safe():
         try:
             execute(f"ALTER TABLE users ADD COLUMN {name} {typ}")
         except Exception:
+            db_rollback_safe()
             pass
     return True
 
@@ -922,6 +943,8 @@ def index():
 
 @app.post("/login")
 def login():
+    # V594_LOGIN_ROLLBACK_BEFORE_SELECT
+    db_rollback_safe()
     # V593_LOGIN_SAFE_START
     try:
         v593_fix_all_known_migrations()
@@ -1480,6 +1503,7 @@ def api_stock_auto_expire():
                         (now(), current_user()["id"], "Списання", x.get("component",""), x.get("donor_group",""), x.get("donor_rh",""), x.get("amount",0), x.get("pack_no",""), x.get("series",""), x.get("expiry",""), "", "Автосписання: закінчився термін", x.get("qr_code","")))
                 expired.append(x)
         except Exception:
+            db_rollback_safe()
             pass
     audit("auto_expire", f"expired={len(expired)}")
     if expired:
@@ -1588,7 +1612,7 @@ def api_backup_encryption_status():
 
 @app.get("/api/version")
 def api_version():
-    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.3")
+    return jsonify(ok=True, version="V5.5", title="Банк крові V5.9.4")
 
 
 @app.get("/api/telegram/status")
@@ -1865,6 +1889,7 @@ def ensure_login_attempts_columns_v592():
         try:
             execute(f"ALTER TABLE login_attempts ADD COLUMN {col} {typ}")
         except Exception:
+            db_rollback_safe()
             pass
     return True
 
@@ -1957,6 +1982,7 @@ def log_incompatibility(request_id, req, donor_group, donor_rh, component, reaso
                 ("admin","transfusion"), "critical", True
             )
         except Exception:
+            db_rollback_safe()
             pass
         return True
     except Exception as e:
@@ -2295,6 +2321,7 @@ def v593_safe_exec(sql, params=()):
         execute(sql, params)
         return True, ""
     except Exception as e:
+        db_rollback_safe()
         return False, str(e)
 
 def v593_fix_all_known_migrations():
@@ -2387,6 +2414,12 @@ def api_emergency_db_fix_v593():
         out["error"]=str(e)
     return jsonify(out), (200 if out.get("ok") else 500)
 # ================= END V5.9.3 EMERGENCY HEALTH / DB FIX =================
+
+
+@app.get("/api/tx-reset")
+def api_tx_reset_v594():
+    db_rollback_safe()
+    return jsonify(ok=True, version="V5.9.4", message="transaction rolled back")
 
 @app.get("/manifest.json")
 def manifest():
