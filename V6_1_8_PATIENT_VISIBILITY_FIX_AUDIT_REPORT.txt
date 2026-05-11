@@ -1,0 +1,16 @@
+BLOOD BANK V6.1.8 PATIENT VISIBILITY FIX AUDIT REPORT
+====================================================================================================
+
+[OK] 01 Python compile — 
+[OK] 02 shared.js syntax — OK
+[OK] 03 service-worker syntax — OK
+[OK] 03 version labels — 
+[OK] 04 patient exists — 
+[OK] 05 patient hidden unless active — 
+[OK] 06 no bad v617 CSS — 
+[OK] 07 show removes active — 
+[OK] 08 pwa v618 — 
+[OK] 09 version endpoint — {'ok': True, 'title': 'Банк крові V6.1.8', 'version': 'V6.1.8'}
+[OK] 10 html has patient route — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.1.8</title><link rel="stylesheet" 
+
+Підсумок: 11/11 тестів успішно.
