@@ -828,3 +828,20 @@ body.dark .iphone-manual-first input{
   color:#e5e7eb;
   border-color:#475569;
 }
+
+
+/* V6.1.7 final patient route fix */
+#patientsSec,
+#patientsSec.always-allowed,
+section#patientsSec{
+  display:block;
+}
+#patientsSec.role-hidden{
+  display:block!important;
+}
+body[data-role="doctor"] #patientsSec,
+body[data-role="nurse"] #patientsSec,
+body[data-role="admin"] #patientsSec,
+body[data-role="transfusion"] #patientsSec{
+  display:block!important;
+}

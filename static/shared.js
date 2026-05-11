@@ -1097,3 +1097,89 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(f)f.addEventListener('change',()=>toast('Фото вибрано. Автоматичне розпізнавання на iPhone недоступне — введіть код вручну з етикетки.','warn'));
   },900);
 });
+
+
+// V6.1.7 FINAL patient route fix: patientsSec is always allowed
+function normalizeSectionIdV617(id){
+  const aliases={
+    patientSec:'patientsSec',
+    patient:'patientsSec',
+    patients:'patientsSec',
+    Пацієнт:'patientsSec',
+    journalSec:'transfusionJournalSec',
+    warningSec:'warningsSec',
+    warnings:'warningsSec',
+    cartSec:'trashSec',
+    trash:'trashSec'
+  };
+  return aliases[id]||id;
+}
+function forceShowPatientV617(){
+  const el=document.getElementById('patientsSec');
+  if(!el){
+    try{toast('Розділ Пацієнт відсутній у HTML','warn')}catch(e){}
+    return false;
+  }
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  el.classList.remove('role-hidden');
+  el.style.display='';
+  try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}
+  return true;
+}
+function show(id){
+  id=normalizeSectionIdV617(id);
+  if(id==='patientsSec')return forceShowPatientV617();
+  const el=document.getElementById(id);
+  if(!el){try{toast('Розділ не знайдено','warn')}catch(e){};return false;}
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  el.classList.remove('role-hidden');
+  if(id==='componentsSec'&&typeof loadComponentStockV613==='function')loadComponentStockV613();
+  if(id==='warningsSec'&&typeof loadWarningsV615==='function')loadWarningsV615();
+  if(id==='trashSec'&&typeof loadTrashV615==='function')loadTrashV615();
+  if(id==='transfusionJournalSec'&&typeof loadTransfusionJournalV615==='function')loadTransfusionJournalV615();
+  if(id==='backupSec'&&typeof loadBackupsV613==='function')loadBackupsV613();
+  if(id==='usersSec'&&typeof loadUsersPanel==='function')loadUsersPanel();
+  return true;
+}
+function safeShowV613(primary,fallback){
+  primary=normalizeSectionIdV617(primary);
+  fallback=normalizeSectionIdV617(fallback);
+  if(primary==='patientsSec')return forceShowPatientV617();
+  const p=document.getElementById(primary);
+  if(p)return show(primary);
+  const f=document.getElementById(fallback);
+  if(f)return show(fallback);
+  try{toast('Розділ не знайдено','warn')}catch(e){}
+  return false;
+}
+function openRoleFeature(id){ return show(id); }
+function safeOpenFeature(id){ return show(id); }
+const oldApplyRoleVisibilityV617 = typeof applyRoleVisibilityV613==='function'?applyRoleVisibilityV613:null;
+async function applyRoleVisibilityV613(){
+  if(oldApplyRoleVisibilityV617) {
+    try{ await oldApplyRoleVisibilityV617(); }catch(e){}
+  }
+  const p=document.getElementById('patientsSec');
+  if(p){
+    p.classList.remove('role-hidden');
+    p.style.display='';
+  }
+  document.querySelectorAll('button').forEach(b=>{
+    const txt=(b.textContent||'').trim().toLowerCase();
+    const oc=b.getAttribute('onclick')||'';
+    if(txt.includes('пацієнт') || oc.includes('patientsSec') || oc.includes('patientSec')){
+      b.classList.remove('role-hidden');
+      b.style.display='';
+      b.setAttribute('onclick','forceShowPatientV617()');
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{
+    applyRoleVisibilityV613();
+    const p=document.getElementById('patientsSec');
+    if(p){p.classList.remove('role-hidden');p.style.display='';}
+  },800);
+});
