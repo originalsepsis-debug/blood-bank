@@ -1,0 +1,62 @@
+V6.1.9 SECTION RESTORE — FULL TEST REPORT
+Date: 2026-05-11
+
+Issue reproduced / root cause:
+- In V6.1.8 the final patient visibility override redefined safeOpenFeature(id) as show(id).
+- Navigation buttons call safeOpenFeature('stock'), safeOpenFeature('dashboardPro'), safeOpenFeature('temperature').
+- Real HTML section ids are stockSec, dashboardProSec, temperatureSec.
+- Result: sections appeared missing/unavailable after the last improvement.
+
+Files changed:
+- static/shared.js
+- templates/app.html
+- app.py version labels
+- README_V6_1_9_SECTION_RESTORE.md
+- V6_1_9_SECTION_RESTORE_FULL_TEST_REPORT.txt
+
+Frontend fixes:
+- Added final V6.1.9 section router aliases:
+  stock -> stockSec
+  dashboardPro -> dashboardProSec
+  temperature -> temperatureSec
+  patient -> patientsSec
+  barcode/qr -> qrScannerSec
+  warnings/trash/journal/etc. mapped to their real ids.
+- Restored safeOpenFeature(feature) and openRoleFeature(feature) to route through aliases.
+- On section open, loaders are triggered:
+  stockSec -> loadStock()
+  dashboardProSec -> loadDashboardPro()
+  temperatureSec -> loadTemperature()
+- Fixed duplicate onclick on Patient button.
+- Hardened loadStock() so it does not crash if older dashboard counter elements are absent.
+- Patient section remains available as a separate section and should not overlay other sections.
+
+Backend/API tests passed:
+GET:
+- /api/me
+- /api/ui/feature-map
+- /api/ui/role-config
+- /api/stock
+- /api/stock/summary
+- /api/dashboard/pro
+- /api/temperature
+- /api/alerts
+- /api/warnings
+- /api/requests
+- /api/transfusions
+- /api/health
+
+Write/relationship tests passed:
+- POST /api/stock/add: created stock entry, then verified it appears in /api/stock.
+- POST /api/temperature/add: created temperature log, then verified it appears in /api/temperature.
+- GET /api/dashboard/pro after stock add: verified dashboard sees stock_items >= 1.
+- POST /api/request/create: created patient request, then verified it appears in /api/requests.
+
+Static/frontend checks passed:
+- HTML contains stockSec, dashboardProSec, temperatureSec, patientsSec.
+- Buttons contain safeOpenFeature('stock'), safeOpenFeature('dashboardPro'), safeOpenFeature('temperature'), safeOpenFeature('patient').
+- JavaScript syntax check passed: node --check static/shared.js.
+- Python syntax check passed: python -m py_compile app.py.
+
+Known limitation:
+- Full real-browser camera/BarcodeDetector behavior on iPhone cannot be physically verified inside this container. Existing manual iPhone fallback remains in code.
