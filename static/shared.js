@@ -1237,3 +1237,120 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   },900);
 });
+
+
+// V6.1.9 SECTION RESTORE HOTFIX
+// Причина: V6.1.8 перевизначив safeOpenFeature(id) як show(id), тому кнопки
+// safeOpenFeature('stock'/'dashboardPro'/'temperature') шукали неіснуючі id
+// stock/dashboardPro/temperature замість stockSec/dashboardProSec/temperatureSec.
+(function(){
+  const SECTION_ALIASES_V619={
+    patient:'patientsSec', patients:'patientsSec', patientSec:'patientsSec', Пацієнт:'patientsSec',
+    stock:'stockSec', warehouse:'stockSec', sklad:'stockSec',
+    dashboard:'homeSec', dashboardSec:'homeSec', home:'homeSec',
+    dashboardPro:'dashboardProSec', proDashboard:'dashboardProSec', statsPro:'dashboardProSec',
+    temperature:'temperatureSec', fridge:'temperatureSec', temp:'temperatureSec',
+    barcode:'qrScannerSec', qr:'qrScannerSec', qrScanner:'qrScannerSec', scan:'qrScannerSec',
+    requests:'requestsSec', request:'requestsSec', myRequests:'requestsSec',
+    history:'transfusionJournalSec', journal:'transfusionJournalSec', journalSec:'transfusionJournalSec',
+    transfusionJournal:'transfusionJournalSec', reactions:'reactionRegistrySec', reaction:'reactionRegistrySec',
+    warnings:'warningsSec', warning:'warningsSec', warningSec:'warningsSec', alerts:'alertsSec',
+    trash:'trashSec', cart:'trashSec', backup:'backupSec', users:'usersSec', reports:'reportsSec',
+    audit:'auditSec', monitor:'maintenanceSec', maintenance:'maintenanceSec', telegram:'telegramSec',
+    telegramPersonal:'telegramPersonalSec', pwa:'pwaInstallSec', traceability:'traceabilitySec',
+    incompat:'incompatSec', writeoff:'writeoffSec', dailyReport:'dailyReportSec', components:'componentsSec'
+  };
+  function resolveSectionV619(id){
+    if(!id)return '';
+    if(document.getElementById(id))return id;
+    if(SECTION_ALIASES_V619[id])return SECTION_ALIASES_V619[id];
+    if(document.getElementById(id+'Sec'))return id+'Sec';
+    return id;
+  }
+  function triggerSectionLoadV619(id){
+    try{
+      if(id==='stockSec' && typeof loadStock==='function') loadStock();
+      if(id==='dashboardProSec' && typeof loadDashboardPro==='function') loadDashboardPro();
+      if(id==='temperatureSec' && typeof loadTemperature==='function') loadTemperature();
+      if(id==='componentsSec' && typeof loadComponentStockV613==='function') loadComponentStockV613();
+      if(id==='warningsSec' && typeof loadWarningsV615==='function') loadWarningsV615();
+      if(id==='trashSec' && typeof loadTrashV615==='function') loadTrashV615();
+      if(id==='transfusionJournalSec' && typeof loadTransfusionJournalV615==='function') loadTransfusionJournalV615();
+      if(id==='backupSec' && typeof loadBackupsV613==='function') loadBackupsV613();
+      if(id==='usersSec' && typeof loadUsersPanel==='function') loadUsersPanel();
+      if(id==='alertsSec' && typeof loadAlerts==='function') loadAlerts();
+      if(id==='reportsSec' && typeof loadReport==='function') loadReport();
+    }catch(e){console.warn('section loader error', id, e);}
+  }
+  window.show=function(id){
+    const target=resolveSectionV619(id);
+    const el=document.getElementById(target);
+    if(!el){try{toast('Розділ не знайдено: '+id,'warn')}catch(e){};return false;}
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    el.classList.remove('role-hidden');
+    el.style.display='';
+    el.classList.add('active');
+    triggerSectionLoadV619(target);
+    return true;
+  };
+  window.safeOpenFeature=function(feature){return window.show(feature);};
+  window.openRoleFeature=function(feature){return window.show(feature);};
+  window.forceShowPatientV617=function(){return window.show('patientsSec');};
+
+  const previousApplyRoleVisibilityV619 = typeof applyRoleVisibilityV613==='function' ? applyRoleVisibilityV613 : null;
+  window.applyRoleVisibilityV613 = async function(){
+    let role=(document.body.getAttribute('data-role')||window.ROLE||APP?.role||'admin');
+    try{const cfg=await jget('/api/ui/role-config'); if(cfg&&cfg.ok&&cfg.role)role=cfg.role;}catch(e){}
+    document.body.setAttribute('data-role',role);
+    if(previousApplyRoleVisibilityV619){try{await previousApplyRoleVisibilityV619();}catch(e){}}
+    const adminLike=['admin','transfusion'].includes(role);
+    // Відновлюємо ключові розділи, які зникли після V6.1.8, для адміністратора/трансфузіолога.
+    ['stockSec','dashboardProSec','temperatureSec','componentsSec'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && adminLike){el.classList.remove('role-hidden'); el.style.display='';}
+    });
+    // Пацієнт має бути доступний як окремий розділ, але не повинен показуватись поверх інших.
+    const p=document.getElementById('patientsSec');
+    if(p){p.classList.remove('role-hidden'); if(!p.classList.contains('active')) p.style.display='';}
+    document.querySelectorAll('button[data-feature]').forEach(btn=>{
+      const f=btn.getAttribute('data-feature');
+      btn.setAttribute('onclick',`safeOpenFeature('${f}')`);
+      if(adminLike || !['stock','dashboardPro','temperature'].includes(f)) btn.classList.remove('role-hidden');
+    });
+  };
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
+    try{window.applyRoleVisibilityV613();}catch(e){}
+    ['stockSec','dashboardProSec','temperatureSec'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && el.classList.contains('active')) triggerSectionLoadV619(id);
+    });
+  },250));
+})();
+
+// V6.1.9 stock loader hardening: не падає, якщо старі dashboard counters відсутні у HTML.
+(function(){
+  window.loadStock = async function(){
+    const box=document.getElementById('stock');
+    try{
+      const st=await jget('/api/stock');
+      const data=Array.isArray(st)?st:[];
+      let r=0,p=0,t=0,cr=0,low=0;
+      let h='<div class="table-scroll"><table><tr><th>Компонент</th><th>Група/Rh</th><th>К-сть</th></tr>';
+      data.forEach(x=>{
+        const q=Number(x.qty ?? x.total ?? x.amount ?? 0);
+        const kind=compKind(x.component);
+        if(kind==='rbc')r+=q; if(kind==='plasma')p+=q; if(kind==='plt')t+=q; if(kind==='cryo')cr+=q; if(q<5)low++;
+        h+=`<tr><td>${x.component||''}</td><td>${x.group||x.donor_group||''} ${x.rh||x.donor_rh||''}</td><td>${q}</td></tr>`;
+      });
+      h+='</table></div>';
+      const set=(id,v)=>{const el=document.getElementById(id); if(el)el.textContent=v;};
+      set('rbcStat',r); set('plasmaStat',p); set('pltStat',t); set('cryoStat',cr); set('lowStat',low);
+      if(box) box.innerHTML = data.length ? h : '<div class="notice">Склад порожній або дані ще не внесені.</div>';
+      return data;
+    }catch(e){
+      if(box) box.innerHTML='<div class="danger">Не вдалося завантажити склад: '+(e.message||e)+'</div>';
+      console.warn('loadStock failed', e);
+      return [];
+    }
+  };
+})();
