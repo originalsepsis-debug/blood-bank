@@ -921,3 +921,33 @@ function show(id){
 const oldLoadAllV613=typeof loadAll==='function'?loadAll:null;
 async function loadAll(){if(oldLoadAllV613)await oldLoadAllV613(); applyRoleVisibilityV613(); loadComponentStockV613(); loadBackupsV613();}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{applyDarkModeV613();applyRoleVisibilityV613();loadComponentStockV613();loadBackupsV613();},700));
+
+
+// V6.1.4 UI/Forms/QR fixes
+function groupByV614(arr, key){return arr.reduce((a,x)=>{const k=x[key]||'—';(a[k]=a[k]||[]).push(x);return a;},{});}
+async function loadComponentStockV613(){
+  const cards=document.getElementById('componentSummaryCards'), table=document.getElementById('componentStockTable');
+  if(!cards&&!table)return;
+  let res={items:[]}; try{res=await jget('/api/stock/summary')}catch(e){}
+  const items=res.items||[], totals={}; items.forEach(x=>{totals[x.component]=(totals[x.component]||0)+Number(x.total||0)});
+  const comps=['Еритроцитарні компоненти','Плазма','Тромбоцити','Кріопреципітат'];
+  if(cards)cards.innerHTML=comps.map(c=>`<button class="component-card ${componentColorV613(c)}" onclick="toggleComponentDetailsV614('${c.replace(/'/g,'')}')"><div>${c}</div><div class="num">${totals[c]||0}</div><small>Натисніть для деталей</small></button>`).join('');
+  renderComponentDetailsV614(items);
+}
+function renderComponentDetailsV614(items, filter){
+  const table=document.getElementById('componentStockTable'); if(!table)return;
+  const data=filter?items.filter(x=>x.component===filter):items;
+  const grouped=groupByV614(data,'component');
+  table.innerHTML=Object.keys(grouped).map(comp=>{const rows=grouped[comp];return `<details class="component-detail" ${filter===comp?'open':''}><summary>${comp} — ${rows.reduce((s,x)=>s+Number(x.total||0),0)}</summary><div class="table-scroll"><table><tr><th>Група</th><th>Rh</th><th>Кількість</th><th>Пакетів</th><th>Найближчий термін придатності</th></tr>${rows.map(x=>`<tr><td>${x.donor_group||''}</td><td>${x.donor_rh||''}</td><td>${x.total||0}</td><td>${x.packs||0}</td><td>${x.nearest_expiry||''}</td></tr>`).join('')}</table></div></details>`;}).join('') || '<div class="notice">Компонентів на складі ще немає.</div>';
+}
+async function toggleComponentDetailsV614(component){let res={items:[]}; try{res=await jget('/api/stock/summary')}catch(e){} renderComponentDetailsV614(res.items||[], component); const el=document.getElementById('componentStockTable'); if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
+async function scanManualBarcodeV614(){
+  const el=document.getElementById('manualBarcodeInputV614')||document.getElementById('qrManual');
+  const code=(el&&el.value||'').trim();
+  if(!code){toast('Введіть код пакета вручну','warn');return;}
+  try{const r=await jpost('/api/barcode/scan',{code}); toast(r.ok?'✅ Код знайдено':(r.error||'Код не знайдено'), r.ok?'good':'warn'); const out=document.getElementById('qrResult')||document.getElementById('barcodeResult'); if(out)out.innerHTML=`<div class="notice"><pre>${JSON.stringify(r,null,2)}</pre></div>`;}catch(e){toast('Помилка перевірки коду','warn');}
+}
+document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{document.querySelectorAll('.quick-info, .quick-info *').forEach(el=>el.classList.add('day-readable'));},600);});
+
+// V6.1.4 reaction actual ids
+const oldSaveReactionActualV614 = typeof saveReactionRegistry==='function'?saveReactionRegistry:null;

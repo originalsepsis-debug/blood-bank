@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V6.1.3"
+APP_TITLE = "Банк крові V6.1.4"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -698,7 +698,7 @@ def health_payload():
             dt=datetime.strptime(b["created_at"], "%Y-%m-%d %H:%M:%S")
             age=round((datetime.now()-dt).total_seconds()/3600,2)
     except Exception: pass
-    return {"ok":ok,"version":"V6.1.3","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
+    return {"ok":ok,"version":"V6.1.4","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
         "admin_count": len(rows("SELECT id FROM users WHERE role=\'admin\' AND active=1")),"time":now()}
 
 
@@ -1618,7 +1618,7 @@ def api_external_event():
 @app.get("/api/external/status")
 @api_token_required
 def api_external_status():
-    return jsonify(ok=True, version="V6.1.3", postgres=IS_POSTGRES, time=now())
+    return jsonify(ok=True, version="V6.1.4", postgres=IS_POSTGRES, time=now())
 
 @app.get("/api/security/full-audit")
 @role_required("admin")
@@ -1916,7 +1916,7 @@ def ensure_login_attempts_columns_v592():
 
 @app.get("/api/health-debug")
 def api_health_debug():
-    out={"ok":False,"version":"V6.1.3"}
+    out={"ok":False,"version":"V6.1.4"}
     try:
         out["db_select"]=row("SELECT 1 AS ok")
         out["migrations"]=v593_fix_all_known_migrations()
@@ -2414,7 +2414,7 @@ def v593_fix_all_known_migrations():
 
 @app.get("/api/public-health")
 def api_public_health_v593():
-    out={"ok":False,"version":"V6.1.3"}
+    out={"ok":False,"version":"V6.1.4"}
     try:
         out["db_select"]=row("SELECT 1 AS ok")
         out["migrations"]=v593_fix_all_known_migrations()
@@ -2426,7 +2426,7 @@ def api_public_health_v593():
 
 @app.get("/api/emergency-db-fix")
 def api_emergency_db_fix_v593():
-    out={"ok":False,"version":"V6.1.3"}
+    out={"ok":False,"version":"V6.1.4"}
     try:
         out["migrations"]=v593_fix_all_known_migrations()
         out["admins"]=len(rows("SELECT id FROM users WHERE role='admin' AND active=1"))
@@ -2440,7 +2440,7 @@ def api_emergency_db_fix_v593():
 @app.get("/api/tx-reset")
 def api_tx_reset_v594():
     db_rollback_safe()
-    return jsonify(ok=True, version="V6.1.3", message="transaction rolled back")
+    return jsonify(ok=True, version="V6.1.4", message="transaction rolled back")
 
 
 @app.get("/api/ui/feature-map")
@@ -2460,7 +2460,7 @@ def api_ui_feature_map():
 
 
 # ================= V6.0.1 STABLE CLEAN ARCHITECTURE =================
-APP_VERSION = "V6.1.3"
+APP_VERSION = "V6.1.4"
 
 ROLE_PERMISSIONS = {
     "admin": {
@@ -2619,13 +2619,10 @@ def api_users_clear_first_login_v611():
 
 
 
-@app.get("/api/version")
-def api_version_v613():
-    return jsonify(ok=True, version="V6.1.3", title=APP_TITLE)
 
 @app.get("/api/stock/summary")
 @login_required
-def api_stock_summary_v613():
+def api_stock_summary_v614():
     try:
         table = None
         try:
@@ -2665,6 +2662,11 @@ def api_ui_role_config_v613():
     else:
         allowed=["home","requests"]
     return jsonify(ok=True, role=role, allowed=allowed)
+
+
+@app.get("/api/version")
+def api_version_v614():
+    return jsonify(ok=True, version="V6.1.4", title=APP_TITLE)
 
 @app.get("/manifest.json")
 def manifest():

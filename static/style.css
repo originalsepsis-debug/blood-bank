@@ -672,3 +672,11 @@ body[data-role="doctor"] button[onclick*="stockSec"],body[data-role="doctor"] bu
 .component-card.red{background:#dc2626}.component-card.yellow{background:#facc15;color:#111827}.component-card.blue{background:#3b82f6}.component-card.purple{background:#9333ea}.component-card.dark{background:#111827}.component-card .num{font-size:34px;margin-top:6px}
 .table-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.table-scroll table{min-width:760px;width:100%;border-collapse:collapse}.table-scroll th,.table-scroll td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;white-space:nowrap}
 @media(max-width:760px){.component-cards{grid-template-columns:1fr 1fr}.card,.section{width:calc(100% - 14px)!important;margin-left:auto!important;margin-right:auto!important}}
+
+
+/* V6.1.4 UI/Forms/QR fixes */
+.role-title-hidden{display:none!important}
+.quick-info,.quick-info *,.quick-info span,.quick-info div{color:#0f172a!important}.quick-info strong{color:#047857!important;background:#dcfce7!important}body.dark .quick-info,body.dark .quick-info *{color:#e5e7eb!important}body.dark .quick-info strong{color:#bbf7d0!important;background:#064e3b!important}
+.component-card{border:0;cursor:pointer;text-align:left}.component-card small{display:block;margin-top:8px;font-size:13px;opacity:.9}
+.component-detail{margin:14px 0;border:1px solid #dbe4f0;border-radius:16px;background:#fff;overflow:hidden}.component-detail summary{cursor:pointer;padding:16px 18px;font-weight:1000;font-size:18px;color:#0f172a;background:#f8fafc}.component-detail[open] summary{border-bottom:1px solid #e5e7eb}body.dark .component-detail{background:#0f172a;border-color:#334155}body.dark .component-detail summary{background:#111827;color:#e5e7eb;border-color:#334155}
+.manual-qr-box{margin-top:18px;display:grid;gap:12px}.manual-qr-box label,.request-form-v61 label,.flat-page label{display:flex;flex-direction:column;gap:6px;font-weight:900;color:#0f172a}.manual-qr-box input,.flat-page input[type="date"],.flat-page input[type="time"]{border:1.5px solid #d7dee9;border-radius:12px;min-height:48px;padding:10px;font-size:16px}body.dark .manual-qr-box label,body.dark .flat-page label{color:#e5e7eb}label span{font-weight:900}
