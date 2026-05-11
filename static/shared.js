@@ -951,3 +951,96 @@ document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{document.query
 
 // V6.1.4 reaction actual ids
 const oldSaveReactionActualV614 = typeof saveReactionRegistry==='function'?saveReactionRegistry:null;
+
+
+// V6.1.5 UI + iPhone scanner hotfix
+function setThemeIconV615(){
+  document.querySelectorAll('button[onclick*="toggleTheme"],.theme-toggle').forEach(b=>{
+    b.setAttribute('title', document.body.classList.contains('dark')?'Перейти у денний режим':'Перейти у нічний режим');
+    b.setAttribute('aria-label', b.getAttribute('title'));
+  });
+}
+const prevToggleThemeV615 = window.toggleTheme;
+window.toggleTheme=function(){
+  document.body.classList.toggle('dark');
+  localStorage.setItem('bloodBankDarkMode',document.body.classList.contains('dark')?'1':'0');
+  setThemeIconV615();
+};
+function componentColorV613(name){name=(name||'').toLowerCase(); if(name.includes('плаз'))return'yellow'; if(name.includes('тромб'))return'blue'; if(name.includes('кріо'))return'purple'; if(name.includes('ерит')||name.includes('кров'))return'red'; return'dark'}
+function groupByV615(arr,key){return arr.reduce((a,x)=>{const k=x[key]||'—';(a[k]=a[k]||[]).push(x);return a;},{});}
+async function loadComponentStockV613(){
+  const cards=document.getElementById('componentSummaryCards'), table=document.getElementById('componentStockTable');
+  if(!cards&&!table)return;
+  let res={items:[]}; try{res=await jget('/api/stock/summary')}catch(e){}
+  const items=res.items||[], totals={}; items.forEach(x=>{totals[x.component]=(totals[x.component]||0)+Number(x.total||0)});
+  const comps=['Еритроцитарні компоненти','Плазма','Тромбоцити','Кріопреципітат'];
+  if(cards)cards.innerHTML=comps.map(c=>`<button class="component-card ${componentColorV613(c)}" onclick="toggleComponentDetailsV615('${c.replace(/'/g,"")}')"><div>${c}</div><div class="num">${totals[c]||0}</div><small>Натисніть для деталей</small></button>`).join('');
+  renderComponentDetailsV615(items);
+}
+function renderComponentDetailsV615(items, filter){
+  const table=document.getElementById('componentStockTable'); if(!table)return;
+  const data=filter?items.filter(x=>x.component===filter):items;
+  const grouped=groupByV615(data,'component');
+  table.innerHTML=Object.keys(grouped).map(comp=>{
+    const rows=grouped[comp], sum=rows.reduce((s,x)=>s+Number(x.total||0),0);
+    return `<details class="component-detail" ${filter===comp?'open':''}><summary>▶ ${comp} — ${sum}</summary>
+      <div class="table-scroll"><table><tr><th>Група</th><th>Rh</th><th>Кількість</th><th>Пакетів</th><th>Найближчий термін</th></tr>
+      ${rows.map(x=>`<tr><td>${x.donor_group||''}</td><td>${x.donor_rh||''}</td><td>${x.total||0}</td><td>${x.packs||0}</td><td>${x.nearest_expiry||''}</td></tr>`).join('')}
+      </table></div></details>`;
+  }).join('') || '<div class="notice">Компонентів на складі ще немає.</div>';
+}
+async function toggleComponentDetailsV615(component){
+  let res={items:[]}; try{res=await jget('/api/stock/summary')}catch(e){}
+  renderComponentDetailsV615(res.items||[],component);
+}
+async function loadWarningsV615(){
+  const box=document.getElementById('warningsListV615'); if(!box)return;
+  let d={warnings:[]}; try{d=await jget('/api/warnings')}catch(e){}
+  box.innerHTML=(d.warnings||[]).map(w=>`<div class="warning-item ${w.level||'info'}"><b>${w.title||''}</b><br>${w.text||''}</div>`).join('') || '<div class="warning-item ok">Попереджень немає</div>';
+}
+async function loadTrashV615(){
+  const box=document.getElementById('trashListV615'); if(!box)return;
+  let d={items:[]}; try{d=await jget('/api/trash')}catch(e){}
+  const items=d.items||[];
+  box.innerHTML=items.length?items.map(x=>`<div class="trash-item"><b>${x._table||'запис'} #${x.id||''}</b><br>${x.patient_name||x.component||x.status||''}</div>`).join(''):'<div class="notice">Кошик порожній.</div>';
+}
+async function loadTransfusionJournalV615(){
+  const box=document.getElementById('transfusionJournalListV615'); if(!box)return;
+  let req=[]; try{req=await jget('/api/requests/mine')}catch(e){}
+  box.innerHTML=Array.isArray(req)&&req.length?req.map(x=>`<div class="journal-item"><b>${x.patient_name||'Пацієнт'}</b><br>${x.component||''} ${x.patient_group||''} ${x.patient_rh||''}<br>Статус: ${x.status||'active'}</div>`).join(''):'<div class="notice">Записів журналу поки немає.</div>';
+}
+async function scanManualBarcodeV614(){
+  const el=document.getElementById('manualBarcodeInputV614')||document.getElementById('qrManual');
+  const code=(el&&el.value||'').trim();
+  if(!code){toast('На iPhone введіть код вручну або виберіть фото коду','warn');return;}
+  try{
+    const r=await jpost('/api/barcode/scan',{code});
+    toast(r.ok?'✅ Код знайдено':(r.error||'Код не знайдено'), r.ok?'good':'warn');
+    const out=document.getElementById('qrResult')||document.getElementById('barcodeResult');
+    if(out)out.innerHTML=`<div class="notice"><b>Код:</b> ${code}<br><pre>${JSON.stringify(r,null,2)}</pre></div>`;
+  }catch(e){toast('Помилка перевірки коду','warn');}
+}
+const oldShowV615 = typeof show==='function'?show:null;
+function show(id){
+  const aliases={patientSec:'patientsSec',journalSec:'transfusionJournalSec',warningSec:'warningsSec',warnings:'warningsSec',cartSec:'trashSec',trash:'trashSec'};
+  id=aliases[id]||id;
+  const el=document.getElementById(id);
+  if(!el){try{toast('Розділ не знайдено або недоступний для ролі','warn')}catch(e){};return;}
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active'); el.classList.remove('role-hidden');
+  if(id==='componentsSec')loadComponentStockV613();
+  if(id==='warningsSec')loadWarningsV615();
+  if(id==='trashSec')loadTrashV615();
+  if(id==='transfusionJournalSec')loadTransfusionJournalV615();
+  if(id==='backupSec'&&typeof loadBackupsV613==='function')loadBackupsV613();
+  if(id==='usersSec'&&typeof loadUsersPanel==='function')loadUsersPanel();
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{
+    if(localStorage.getItem('bloodBankDarkMode')==='1')document.body.classList.add('dark');
+    setThemeIconV615();
+    loadWarningsV615(); loadTrashV615(); loadTransfusionJournalV615();
+    const f=document.getElementById('barcodeImageFileV615');
+    if(f)f.addEventListener('change',()=>toast('Фото вибрано. Якщо код не розпізнано автоматично — введіть код вручну.','warn'));
+  },700);
+});

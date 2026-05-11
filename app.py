@@ -15,7 +15,7 @@ try:
 except Exception:
     psycopg2 = None
 
-APP_TITLE = "Банк крові V6.1.4"
+APP_TITLE = "Банк крові V6.1.5"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -698,7 +698,7 @@ def health_payload():
             dt=datetime.strptime(b["created_at"], "%Y-%m-%d %H:%M:%S")
             age=round((datetime.now()-dt).total_seconds()/3600,2)
     except Exception: pass
-    return {"ok":ok,"version":"V6.1.4","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
+    return {"ok":ok,"version":"V6.1.5","database":"ok" if ok else "error","database_error":err,"postgres":IS_POSTGRES,"telegram_configured":bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),"backup_age_hours":age,"auto_backup_enabled":AUTO_BACKUP_ENABLED,
         "admin_count": len(rows("SELECT id FROM users WHERE role=\'admin\' AND active=1")),"time":now()}
 
 
@@ -1383,8 +1383,22 @@ def delete_record():
     audit("delete_record", f"{table}:{rid}")
     return jsonify(ok=True)
 
-@app.get("/api/trash")
-@role_required("admin")
+
+def api_trash_v615():
+    items=[]
+    try:
+        for tbl in ["requests","stock_entries","stock"]:
+            try:
+                got = rows(f"SELECT * FROM {tbl} WHERE COALESCE(status,'') IN ('deleted','trash','removed','written','rejected') ORDER BY id DESC LIMIT 100")
+                for x in got:
+                    x["_table"]=tbl
+                    items.append(x)
+            except Exception:
+                db_rollback_safe()
+    except Exception:
+        db_rollback_safe()
+    return jsonify(ok=True, items=items)
+
 def trash(): return jsonify(rows("SELECT * FROM trash ORDER BY id DESC"))
 
 
@@ -1618,7 +1632,7 @@ def api_external_event():
 @app.get("/api/external/status")
 @api_token_required
 def api_external_status():
-    return jsonify(ok=True, version="V6.1.4", postgres=IS_POSTGRES, time=now())
+    return jsonify(ok=True, version="V6.1.5", postgres=IS_POSTGRES, time=now())
 
 @app.get("/api/security/full-audit")
 @role_required("admin")
@@ -1916,7 +1930,7 @@ def ensure_login_attempts_columns_v592():
 
 @app.get("/api/health-debug")
 def api_health_debug():
-    out={"ok":False,"version":"V6.1.4"}
+    out={"ok":False,"version":"V6.1.5"}
     try:
         out["db_select"]=row("SELECT 1 AS ok")
         out["migrations"]=v593_fix_all_known_migrations()
@@ -2414,7 +2428,7 @@ def v593_fix_all_known_migrations():
 
 @app.get("/api/public-health")
 def api_public_health_v593():
-    out={"ok":False,"version":"V6.1.4"}
+    out={"ok":False,"version":"V6.1.5"}
     try:
         out["db_select"]=row("SELECT 1 AS ok")
         out["migrations"]=v593_fix_all_known_migrations()
@@ -2426,7 +2440,7 @@ def api_public_health_v593():
 
 @app.get("/api/emergency-db-fix")
 def api_emergency_db_fix_v593():
-    out={"ok":False,"version":"V6.1.4"}
+    out={"ok":False,"version":"V6.1.5"}
     try:
         out["migrations"]=v593_fix_all_known_migrations()
         out["admins"]=len(rows("SELECT id FROM users WHERE role='admin' AND active=1"))
@@ -2440,7 +2454,7 @@ def api_emergency_db_fix_v593():
 @app.get("/api/tx-reset")
 def api_tx_reset_v594():
     db_rollback_safe()
-    return jsonify(ok=True, version="V6.1.4", message="transaction rolled back")
+    return jsonify(ok=True, version="V6.1.5", message="transaction rolled back")
 
 
 @app.get("/api/ui/feature-map")
@@ -2460,7 +2474,7 @@ def api_ui_feature_map():
 
 
 # ================= V6.0.1 STABLE CLEAN ARCHITECTURE =================
-APP_VERSION = "V6.1.4"
+APP_VERSION = "V6.1.5"
 
 ROLE_PERMISSIONS = {
     "admin": {
@@ -2620,33 +2634,6 @@ def api_users_clear_first_login_v611():
 
 
 
-@app.get("/api/stock/summary")
-@login_required
-def api_stock_summary_v614():
-    try:
-        table = None
-        try:
-            if rows("SELECT name FROM sqlite_master WHERE type='table' AND name='stock'"):
-                table = "stock"
-            elif rows("SELECT name FROM sqlite_master WHERE type='table' AND name='stock_entries'"):
-                table = "stock_entries"
-        except Exception:
-            db_rollback_safe()
-        if not table:
-            table = "stock_entries"
-        data = rows(f"""
-            SELECT component, donor_group, donor_rh,
-                   COALESCE(SUM(CAST(amount AS REAL)),0) AS total,
-                   COUNT(*) AS packs,
-                   MIN(expiry) AS nearest_expiry
-            FROM {table}
-            GROUP BY component, donor_group, donor_rh
-            ORDER BY component, donor_group, donor_rh
-        """)
-        return jsonify(ok=True, table=table, items=data)
-    except Exception as e:
-        db_rollback_safe()
-        return jsonify(ok=False, error=str(e), items=[]), 500
 
 @app.get("/api/ui/role-config")
 @login_required
@@ -2664,9 +2651,119 @@ def api_ui_role_config_v613():
     return jsonify(ok=True, role=role, allowed=allowed)
 
 
+
+
 @app.get("/api/version")
-def api_version_v614():
-    return jsonify(ok=True, version="V6.1.4", title=APP_TITLE)
+def api_version_v615():
+    return jsonify(ok=True, version="V6.1.5", title=APP_TITLE)
+
+@app.get("/api/stock/summary")
+@login_required
+def api_stock_summary_v615():
+    try:
+        table = None
+        for t in ["stock", "stock_entries"]:
+            try:
+                q = rows("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (t,))
+                if q:
+                    table = t
+                    break
+            except Exception:
+                db_rollback_safe()
+        if not table:
+            table = "stock_entries"
+        data = rows(f"""
+            SELECT component, donor_group, donor_rh,
+                   COALESCE(SUM(CAST(amount AS REAL)),0) AS total,
+                   COUNT(*) AS packs,
+                   MIN(expiry) AS nearest_expiry
+            FROM {table}
+            GROUP BY component, donor_group, donor_rh
+            ORDER BY component, donor_group, donor_rh
+        """)
+        return jsonify(ok=True, table=table, items=data)
+    except Exception as e:
+        db_rollback_safe()
+        return jsonify(ok=False, error=str(e), items=[]), 500
+
+@app.get("/api/warnings")
+@login_required
+def api_warnings_v615():
+    out=[]
+    try:
+        # Critical/empty stock warning
+        try:
+            s = rows("SELECT component, COALESCE(SUM(CAST(amount AS REAL)),0) total FROM stock_entries GROUP BY component")
+        except Exception:
+            db_rollback_safe()
+            s = rows("SELECT component, COALESCE(SUM(CAST(amount AS REAL)),0) total FROM stock GROUP BY component")
+        if not s:
+            out.append({"level":"warn","title":"Склад порожній","text":"Немає компонентів на складі або дані ще не внесені."})
+        for x in s:
+            if float(x.get("total") or 0) <= 0:
+                out.append({"level":"critical","title":"Критичний залишок", "text":f"{x.get('component','Компонент')} — 0"})
+    except Exception:
+        db_rollback_safe()
+    try:
+        reqs = rows("SELECT COUNT(*) c FROM requests WHERE COALESCE(status,'active') IN ('active','new','pending')")
+        c = int((reqs[0].get("c") if reqs else 0) or 0)
+        if c:
+            out.append({"level":"info","title":"Активні вимоги","text":f"Активних вимог: {c}"})
+    except Exception:
+        db_rollback_safe()
+    if not out:
+        out.append({"level":"ok","title":"Попереджень немає","text":"Критичних подій не виявлено."})
+    return jsonify(ok=True, warnings=out)
+
+
+def api_trash_v615():
+    items=[]
+    try:
+        for tbl in ["requests","stock_entries","stock"]:
+            try:
+                got = rows(f"SELECT * FROM {tbl} WHERE COALESCE(status,'') IN ('deleted','trash','removed','written','rejected') ORDER BY id DESC LIMIT 100")
+                for x in got:
+                    x["_table"]=tbl
+                    items.append(x)
+            except Exception:
+                db_rollback_safe()
+    except Exception:
+        db_rollback_safe()
+    return jsonify(ok=True, items=items)
+
+def api_trash_v615():
+    items=[]
+    try:
+        # Known deleted/archive statuses in requests
+        for tbl in ["requests","stock_entries","stock"]:
+            try:
+                got = rows(f"SELECT * FROM {tbl} WHERE COALESCE(status,'') IN ('deleted','trash','removed','written','rejected') ORDER BY id DESC LIMIT 100")
+                for x in got:
+                    x["_table"]=tbl
+                    items.append(x)
+            except Exception:
+                db_rollback_safe()
+    except Exception:
+        db_rollback_safe()
+    return jsonify(ok=True, items=items)
+
+
+@app.get("/api/trash")
+@role_required("admin","transfusion")
+def api_trash_v615_final():
+    items=[]
+    try:
+        for tbl in ["requests","stock_entries","stock"]:
+            try:
+                got = rows(f"SELECT * FROM {tbl} WHERE COALESCE(status,'') IN ('deleted','trash','removed','written','rejected') ORDER BY id DESC LIMIT 100")
+                for x in got:
+                    x["_table"]=tbl
+                    items.append(x)
+            except Exception:
+                db_rollback_safe()
+    except Exception:
+        db_rollback_safe()
+    return jsonify(ok=True, items=items)
 
 @app.get("/manifest.json")
 def manifest():
