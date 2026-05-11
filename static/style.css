@@ -747,3 +747,84 @@ body.dark .warning-item, body.dark .trash-item, body.dark .journal-item{backgrou
 .quick-info strong{color:#064e3b!important;background:#dcfce7!important}
 body.dark .quick-info,body.dark .quick-info *{color:#e5e7eb!important}
 body.dark .quick-info strong{color:#bbf7d0!important;background:#064e3b!important}
+
+
+/* V6.1.6 patient/components/iPhone scanner fixes */
+#patientsSec.always-allowed{display:block}
+.component-cards{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  padding:0!important;
+}
+.component-card{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:18px!important;
+  border-radius:18px!important;
+  overflow:hidden!important;
+  white-space:normal!important;
+  text-align:left!important;
+}
+.component-card div:first-child{
+  max-width:100%!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+  hyphens:auto!important;
+  font-size:clamp(22px,5vw,34px)!important;
+  line-height:1.08!important;
+}
+.component-card .num{
+  font-size:clamp(36px,10vw,58px)!important;
+}
+.component-card small{
+  font-size:clamp(14px,3.8vw,22px)!important;
+  line-height:1.15!important;
+  overflow-wrap:anywhere!important;
+}
+@media(max-width:650px){
+  .component-cards{grid-template-columns:1fr!important;}
+  .component-card{min-height:150px!important;}
+}
+.iphone-manual-first{
+  border:2px solid #2563eb;
+  border-radius:18px;
+  padding:16px;
+  margin:14px 0 20px;
+  background:#eff6ff;
+  color:#0f172a;
+}
+.iphone-manual-first h3{margin:0 0 10px;font-size:24px}
+.iphone-manual-first label{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin:12px 0;
+  font-weight:900;
+}
+.iphone-manual-first input{
+  min-height:54px;
+  border:1.5px solid #94a3b8;
+  border-radius:12px;
+  padding:12px;
+  font-size:18px;
+  width:100%;
+  box-sizing:border-box;
+}
+body.dark .iphone-manual-first{
+  background:#0f172a;
+  color:#e5e7eb;
+  border-color:#3b82f6;
+}
+body.dark .iphone-manual-first input{
+  background:#111827;
+  color:#e5e7eb;
+  border-color:#475569;
+}

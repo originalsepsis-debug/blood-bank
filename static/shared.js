@@ -1044,3 +1044,56 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(f)f.addEventListener('change',()=>toast('Фото вибрано. Якщо код не розпізнано автоматично — введіть код вручну.','warn'));
   },700);
 });
+
+
+// V6.1.6 patient/components/iPhone scanner final overrides
+function scanManualBarcodeV616(){
+  const el=document.getElementById('manualBarcodeInputV616')||document.getElementById('manualBarcodeInputV614')||document.getElementById('qrManual');
+  const code=(el&&el.value||'').trim();
+  if(!code){toast('Введіть QR/Barcode код вручну. На iPhone камера не підтримує BarcodeDetector.','warn');return;}
+  jpost('/api/barcode/scan',{code}).then(r=>{
+    toast(r.ok?'✅ Код знайдено':(r.error||'Код не знайдено'), r.ok?'good':'warn');
+    const out=document.getElementById('qrResult')||document.getElementById('barcodeResult');
+    if(out)out.innerHTML=`<div class="notice"><b>Перевірено код:</b> ${code}<br><pre style="white-space:pre-wrap">${JSON.stringify(r,null,2)}</pre></div>`;
+  }).catch(()=>toast('Помилка перевірки коду','warn'));
+}
+function safeShowV613(primary,fallback){
+  const aliases={patientSec:'patientsSec',journalSec:'transfusionJournalSec',warningSec:'warningsSec',warnings:'warningsSec',cartSec:'trashSec',trash:'trashSec'};
+  primary=aliases[primary]||primary;
+  fallback=aliases[fallback]||fallback;
+  const p=document.getElementById(primary);
+  if(p){show(primary);return true;}
+  const f=document.getElementById(fallback);
+  if(f){show(fallback);return true;}
+  try{toast('Розділ не знайдено або недоступний для ролі','warn')}catch(e){}
+  return false;
+}
+function show(id){
+  const aliases={patientSec:'patientsSec',journalSec:'transfusionJournalSec',warningSec:'warningsSec',warnings:'warningsSec',cartSec:'trashSec',trash:'trashSec'};
+  id=aliases[id]||id;
+  const el=document.getElementById(id);
+  if(!el){try{toast('Розділ не знайдено або недоступний для ролі','warn')}catch(e){};return;}
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  if(id==='patientsSec')el.classList.remove('role-hidden');
+  if(id==='componentsSec'&&typeof loadComponentStockV613==='function')loadComponentStockV613();
+  if(id==='warningsSec'&&typeof loadWarningsV615==='function')loadWarningsV615();
+  if(id==='trashSec'&&typeof loadTrashV615==='function')loadTrashV615();
+  if(id==='transfusionJournalSec'&&typeof loadTransfusionJournalV615==='function')loadTransfusionJournalV615();
+  if(id==='backupSec'&&typeof loadBackupsV613==='function')loadBackupsV613();
+  if(id==='usersSec'&&typeof loadUsersPanel==='function')loadUsersPanel();
+}
+const oldApplyRoleVisibilityV616 = typeof applyRoleVisibilityV613==='function'?applyRoleVisibilityV613:null;
+async function applyRoleVisibilityV613(){
+  if(oldApplyRoleVisibilityV616) await oldApplyRoleVisibilityV616();
+  const p=document.getElementById('patientsSec');
+  if(p)p.classList.remove('role-hidden');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{
+    const p=document.getElementById('patientsSec');
+    if(p)p.classList.remove('role-hidden');
+    const f=document.getElementById('barcodeImageFileV616');
+    if(f)f.addEventListener('change',()=>toast('Фото вибрано. Автоматичне розпізнавання на iPhone недоступне — введіть код вручну з етикетки.','warn'));
+  },900);
+});

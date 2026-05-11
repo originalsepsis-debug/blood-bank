@@ -1,4 +1,4 @@
-<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V6.1.5</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a>
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{title}}</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#b91c1c"></head><body><header class="header"><div><h1>🩸 Банк крові V6.1.6</h1><b>{{user.full_name or user.username}}</b><br>{{user.position or user.role}} · {{user.role}}</div><button id="themeToggle" onclick="toggleTheme()">🌙</button><a class="logout" href="/logout">Вийти</a>
 <nav class="nav"><button onclick="show('requestsSec')">Вимоги</button><button data-feature="stock" onclick="safeOpenFeature('stock')">Склад</button><button onclick="show('alertsSec')">Попередження</button><button onclick="show('homeSec')">🏠 Головна</button><button data-feature="patient" onclick="safeOpenFeature('patient')">Пацієнт</button><button onclick="show('transfusionJournalSec')">Журнал трансфузій</button><button onclick="show('qrScannerSec')">📷 QR</button><button onclick="show('reactionRegistrySec')">Реакції</button><button onclick="show('signSec')">Підпис</button><button onclick="show('telegramSec')">Telegram система</button>{% if user.role in ['admin','transfusion'] %}<button onclick="show('usersSec')">Користувачі</button><button onclick="show('auditSec')">Журнал</button><button onclick="show('reportsSec')">Звіти</button>{% endif %}{% if user.role == 'admin' %}<button onclick="show('backupSec')">Backup</button><button onclick="show('trashSec')">Кошик</button>{% endif %}<button onclick="show('maintenanceSec')">Моніторинг</button><button onclick="show('pwaInstallSec')">Додаток</button><button onclick="show('telegramPersonalSec')">Мій Telegram</button><button data-feature="barcode" onclick="safeOpenFeature('barcode')">QR/Barcode</button><button onclick="show('traceabilitySec')">Traceability</button><button onclick="show('incompatSec')">Несумісності</button><button data-feature="dashboardPro" onclick="safeOpenFeature('dashboardPro')">Dashboard PRO</button><button data-feature="temperature" onclick="safeOpenFeature('temperature')">Температура</button><button onclick="show('writeoffSec')">Списання</button><button onclick="show('dailyReportSec')">Добові звіти</button><button class="admin-transfusion-only" onclick="show('componentsSec')">Компоненти</button><button onclick="show('warningsSec')">Попередження</button></nav>
 <section id="homeSec" class="section active role-home">
   <div class="role-title role-title-hidden"></div>
@@ -87,16 +87,18 @@
 
 
 
-<section id="patientsSec" class="card section flat-page">
+
+<section id="patientsSec" class="card section flat-page always-allowed" data-role-section="patients">
   <h2>👤 Пацієнт</h2>
   <div class="notice flat-notice">Пацієнт: пошук, створення вимоги, активні замовлення та історія.</div>
   <div class="role-tile-grid patient-actions">
-    <button onclick="show('requestsSec')"><span>👤🔍</span><b>Пошук пацієнта</b></button>
-    <button onclick="show('requestsSec')"><span>💧🛒</span><b>Замовлення крові</b></button>
-    <button onclick="show('requestsSec')"><span>📋</span><b>Мої замовлення</b></button>
-    <button onclick="show('transfusionJournalSec')"><span>📄</span><b>Історія пацієнта</b></button>
+    <button type="button" onclick="show('requestsSec')"><span>👤🔍</span><b>Пошук пацієнта</b></button>
+    <button type="button" onclick="show('requestsSec')"><span>💧🛒</span><b>Замовлення крові</b></button>
+    <button type="button" onclick="show('requestsSec')"><span>📋</span><b>Мої замовлення</b></button>
+    <button type="button" onclick="show('transfusionJournalSec')"><span>📄</span><b>Історія пацієнта</b></button>
   </div>
 </section>
+
 
 
 <section id="requestsSec" class="card section"><h2>{% if user.role=='doctor' %}Вимога на компоненти крові{% else %}Вимоги{% endif %}</h2>{% if user.role in ['doctor','admin','transfusion'] %}<div class="form-grid request-form-v61">
@@ -169,6 +171,18 @@
 
 <section id="qrScannerSec" class="card section">
 <h2>QR / Barcode scanner</h2>
+<div class="iphone-manual-first">
+  <h3>📱 iPhone / Safari</h3>
+  <div class="notice flat-notice">На iPhone сканування камерою через BarcodeDetector не підтримується. Використовуйте ручний ввід коду з пакета або сфотографуйте код для перегляду.</div>
+  <label><span>Ввести QR / Barcode вручну</span>
+    <input id="manualBarcodeInputV616" placeholder="Наприклад: PACK123 або QR-код пакета">
+  </label>
+  <button type="button" class="btn-green" onclick="scanManualBarcodeV616()">✅ Перевірити код</button>
+  <label><span>Вибрати/сфотографувати код</span>
+    <input id="barcodeImageFileV616" type="file" accept="image/*" capture="environment">
+  </label>
+</div>
+
 <div class="notice">Працює в Chrome/Android через BarcodeDetector. На iPhone можна вводити код вручну.</div>
 <video id="qrVideo" class="qr-video" playsinline></video>
 <div id="qrResult"></div>
