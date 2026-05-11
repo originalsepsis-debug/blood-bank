@@ -1183,3 +1183,57 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(p){p.classList.remove('role-hidden');p.style.display='';}
   },800);
 });
+
+
+// V6.1.8 patient visibility fix
+function forceShowPatientV617(){
+  const el=document.getElementById('patientsSec');
+  if(!el){
+    try{toast('Розділ Пацієнт відсутній у HTML','warn')}catch(e){}
+    return false;
+  }
+  document.querySelectorAll('.section').forEach(s=>{
+    s.classList.remove('active');
+    if(s.id==='patientsSec')s.style.display='';
+  });
+  el.classList.add('active');
+  el.classList.remove('role-hidden');
+  el.style.display='';
+  try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+  return true;
+}
+function show(id){
+  const aliases={patientSec:'patientsSec',patient:'patientsSec',patients:'patientsSec',journalSec:'transfusionJournalSec',warningSec:'warningsSec',warnings:'warningsSec',cartSec:'trashSec',trash:'trashSec'};
+  id=aliases[id]||id;
+  if(id==='patientsSec')return forceShowPatientV617();
+  const el=document.getElementById(id);
+  if(!el){try{toast('Розділ не знайдено','warn')}catch(e){};return false;}
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  el.classList.remove('role-hidden');
+  if(id==='componentsSec'&&typeof loadComponentStockV613==='function')loadComponentStockV613();
+  if(id==='warningsSec'&&typeof loadWarningsV615==='function')loadWarningsV615();
+  if(id==='trashSec'&&typeof loadTrashV615==='function')loadTrashV615();
+  if(id==='transfusionJournalSec'&&typeof loadTransfusionJournalV615==='function')loadTransfusionJournalV615();
+  if(id==='backupSec'&&typeof loadBackupsV613==='function')loadBackupsV613();
+  if(id==='usersSec'&&typeof loadUsersPanel==='function')loadUsersPanel();
+  return true;
+}
+function safeShowV613(primary,fallback){
+  const aliases={patientSec:'patientsSec',patient:'patientsSec',patients:'patientsSec'};
+  primary=aliases[primary]||primary; fallback=aliases[fallback]||fallback;
+  if(primary==='patientsSec')return forceShowPatientV617();
+  if(document.getElementById(primary))return show(primary);
+  if(document.getElementById(fallback))return show(fallback);
+  try{toast('Розділ не знайдено','warn')}catch(e){}
+  return false;
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{
+    const p=document.getElementById('patientsSec');
+    if(p && !p.classList.contains('active')){
+      p.classList.remove('role-hidden');
+      p.style.display='';
+    }
+  },900);
+});

@@ -830,18 +830,28 @@ body.dark .iphone-manual-first input{
 }
 
 
-/* V6.1.7 final patient route fix */
-#patientsSec,
-#patientsSec.always-allowed,
-section#patientsSec{
-  display:block;
-}
+
+
+
+/* V6.1.8 patient visibility fix */
 #patientsSec.role-hidden{
+  display:none!important;
+}
+#patientsSec.section{
+  display:none;
+}
+#patientsSec.section.active{
   display:block!important;
 }
-body[data-role="doctor"] #patientsSec,
-body[data-role="nurse"] #patientsSec,
-body[data-role="admin"] #patientsSec,
-body[data-role="transfusion"] #patientsSec{
+body[data-role="doctor"] #patientsSec.section,
+body[data-role="nurse"] #patientsSec.section,
+body[data-role="admin"] #patientsSec.section,
+body[data-role="transfusion"] #patientsSec.section{
+  display:none;
+}
+body[data-role="doctor"] #patientsSec.section.active,
+body[data-role="nurse"] #patientsSec.section.active,
+body[data-role="admin"] #patientsSec.section.active,
+body[data-role="transfusion"] #patientsSec.section.active{
   display:block!important;
 }
