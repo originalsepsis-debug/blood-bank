@@ -1,0 +1,20 @@
+BLOOD BANK V5.9.5 REAL POSTGRES FIX REPORT
+====================================================================================================
+
+Fix: previous V5.9.4 rollback used non-existing get_db(); V5.9.5 uses db(), postgres autocommit, and patched execute/row/rows/scalar.
+
+[OK] 01 Python compile — 
+[OK] 02 shared.js syntax — OK
+[OK] 03 service-worker syntax — OK
+[OK] 03 postgres autocommit — 
+[OK] 04 rollback uses db not get_db — 
+[OK] 05 execute patched — 
+[OK] 06 row patched — 
+[OK] 07 rows patched — 
+[OK] 08 version — 
+[OK] 09 runtime tx-reset — {'message': 'transaction rolled back', 'ok': True, 'version': 'V5.9.5'}
+[OK] 10 runtime health-debug — {'admins': 1, 'db_select': {'ok': 1}, 'migrations': [], 'ok': True, 'version': 'V5.9.3'}
+[OK] 11 runtime login — 200
+[OK] 12 Gunicorn startup — 
+
+Підсумок: 13/13 тестів успішно.

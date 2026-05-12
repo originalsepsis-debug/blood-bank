@@ -1,0 +1,87 @@
+BLOOD BANK V5.9 FULL BACKEND + FRONTEND + FUNCTIONAL AUDIT REPORT
+====================================================================================================
+
+Scope: backend, frontend, PWA, Telegram, routes, links, login, roles, CSRF, stock, requests, barcode, traceability, incompatibility, temperature, writeoffs, daily reports, backup, audit, Gunicorn.
+
+[OK] 01 Backend Python compile — 
+[OK] 02 Frontend shared.js syntax — OK
+[OK] 03 Service worker syntax — OK
+[OK] 04 manifest.json valid — {'name': 'Банк крові V5.9', 'short_name': 'Банк крові V5.9', 'start_url': '/?v=5.9', 'display': 'standalone', 'background_color': '#f6f7fb', 'theme_color': '#b91c1c', 'icons': [{'src': '/static/icons/icon.svg', 'sizes': '512x512', 'type': 'image/svg+xml'}], 'description': 'Система банку крові', 'scope': '/'}
+[OK] 05 Version V5.9 labels — 
+[OK] 06 Login template — 
+[OK] 07 Main template — 
+[OK] 08 CSS responsive/table — 
+[OK] 09 PWA manifest standalone — 
+[OK] 10 PWA service worker cache — 
+[OK] 11 PWA install UI — 
+[OK] 12 Telegram PRO UI/API — 
+[OK] 13 Single Telegram personal section — 
+[OK] 14 QR/Barcode UI/API — 
+[OK] 15 Traceability UI/API — 
+[OK] 16 Incompatibility journal UI/API — 
+[OK] 17 Dashboard PRO UI/API — 
+[OK] 18 Temperature journal UI/API — 
+[OK] 19 Writeoff UI/API — 
+[OK] 20 Daily reports UI/API — 
+[OK] 21 Admin bootstrap — 
+[OK] 22 Safe startup — 
+[OK] 23 CSRF protection — 
+[OK] 24 Role guards — 
+[OK] 25 Security headers — 
+[OK] 26 Reports PDF/XLSX — 
+[OK] 27 Backup/audit — 
+[OK] 28 Security login attempts — 
+[OK] 29 HTML onclick functions exist — []
+[OK] 30 Duplicate HTML IDs — []
+[OK] 31 Internal hrefs/routes look valid — []
+[OK] 32 Runtime health-debug — {'admins': 1, 'migrations': [], 'ok': True, 'select': {'ok': 1}, 'version': 'V5.7.2'}
+[OK] 33 Runtime root/login no 500 — 200
+[OK] 34 Runtime manifest route — 200
+[OK] 35 Runtime service-worker route — 200
+[OK] 36 Wrong login rejected — 200
+[OK] 37 Sepsis first login works — 200
+[OK] 38 Admin dashboard after password — {'X-CSRF-Token': 'd5873dad888fc9f30c86bb6a0d600196ba4345ef3c22c692'}
+[OK] 39 CSRF blocks unsafe POST — {'error': 'CSRF token invalid', 'ok': False}
+[OK] 40 Create doctor/nurse/transfusion — [{'ok': True}, {'ok': True}, {'ok': True}]
+[OK] 41 Telegram me API — {'bot_username': 'test_bot', 'link_url': 'https://t.me/test_bot?start=link_1_Sepsis', 'ok': True, 'settings': {'backups': 0, 'critical': 0, 'expiring': 0, 'new_requests': 0, 'reactions': 0}, 'telegram_chat_id': '', 'telegram_enabled': False, 'telegram_username': ''}
+[OK] 42 Telegram settings save — {'ok': True}
+[OK] 43 Telegram webhook link — {'ok': True, 'result': 'linked'}
+[OK] 44 Telegram command /stock — {'ok': True, 'result': 'stock'}
+[OK] 44 Telegram command /critical — {'ok': True, 'result': 'critical'}
+[OK] 44 Telegram command /requests — {'ok': True, 'result': 'requests'}
+[OK] 44 Telegram command /expiring — {'ok': True, 'result': 'expiring'}
+[OK] 48 Stock add RBC OK — {'ok': True}
+[OK] 48 Stock add RBC BAD — {'ok': True}
+[OK] 48 Stock add CRYO — {'ok': True}
+[OK] 51 Stock list — 3
+[OK] 52 Request create — {'ok': True}
+[OK] 53 Request listed — [{'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 12:12:43', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': '', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт V59', 'patient_rh': 'Rh+', 'patient_status': '', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Планово', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}]
+[OK] 54 Barcode scan package — {'code': 'QR_OK', 'ok': True, 'package': {'amount': 2.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 12:12:43', 'donor_group': 'O(I)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 1, 'note': '', 'pack_no': 'PACKOK', 'patient_name': '', 'qr_code': 'QR_OK', 'series': '', 'type': 'Надходження', 'user_id': 1}}
+[OK] 55 Barcode compatible check — {'compatible': True, 'ok': True, 'package': {'amount': 2.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 12:12:43', 'donor_group': 'O(I)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 1, 'note': '', 'pack_no': 'PACKOK', 'patient_name': '', 'qr_code': 'QR_OK', 'series': '', 'type': 'Надходження', 'user_id': 1}, 'reason': 'Сумісно', 'request': {'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 12:12:43', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': '', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт V59', 'patient_rh': 'Rh+', 'patient_status': '', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Планово', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}}
+[OK] 56 Barcode incompatible red alert — {'compatible': False, 'ok': False, 'package': {'amount': 2.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 12:12:43', 'donor_group': 'B(III)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 2, 'note': '', 'pack_no': 'PACKBAD', 'patient_name': '', 'qr_code': 'QR_BAD', 'series': '', 'type': 'Надходження', 'user_id': 1}, 'reason': 'ABO несумісність', 'red_alert': True, 'request': {'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 12:12:43', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': '', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт V59', 'patient_rh': 'Rh+', 'patient_status': '', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Планово', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}}
+[OK] 57 Incompatibility log list — [{'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 12:12:43', 'donor_group': 'B(III)', 'donor_rh': 'Rh+', 'id': 1, 'ip_address': '127.0.0.1', 'issued_by': 'Sepsis', 'notes': 'barcode issue-check', 'override_used': 0, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт V59', 'patient_rh': 'Rh+', 'reason': 'ABO несумісність', 'request_id': 1, 'workstation': 'Werkzeug/3.1.8'}]
+[OK] 58 Traceability package lookup — [{'action_type': 'issue_check_ok', 'created_at': '2026-05-10 12:12:43', 'department': 'Хірургія', 'id': 2, 'notes': 'compatible', 'package_code': 'QR_OK', 'patient_name': 'Пацієнт V59', 'request_id': 1, 'user_name': 'Sepsis'}, {'action_type': 'scan', 'created_at': '2026-05-10 12:12:43', 'department': '', 'id': 1, 'notes': 'barcode scan', 'package_code': 'QR_OK', 'patient_name': '', 'request_id': None, 'user_name': 'Sepsis'}]
+[OK] 59 Dashboard PRO API — {'active_requests': 1, 'incompat_today': 1, 'issued_today': 0, 'stock_items': 3, 'temperature_alerts_today': 0, 'used_today': 0, 'writeoffs_today': 0}
+[OK] 60 Temperature normal save — {'alert': False, 'ok': True}
+[OK] 61 Temperature alert save — {'alert': True, 'ok': True}
+[OK] 62 Temperature list — [{'alert_triggered': 1, 'created_at': '2026-05-10 12:12:43', 'entered_by': 'Sepsis', 'fridge_name': 'Холодильник 1', 'id': 2, 'notes': 'тривога', 'temperature': 9.1}, {'alert_triggered': 0, 'created_at': '2026-05-10 12:12:43', 'entered_by': 'Sepsis', 'fridge_name': 'Холодильник 1', 'id': 1, 'notes': 'норма', 'temperature': 4.2}]
+[OK] 63 Writeoff save — {'ok': True}
+[OK] 64 Writeoffs list — [{'amount': 1.0, 'component': 'Кріопреципітат', 'created_at': '2026-05-10 12:12:43', 'id': 1, 'notes': 'test', 'package_code': 'QR_CRYO', 'reason': 'Прострочено', 'written_by': 'Sepsis'}]
+[OK] 65 Daily Telegram report create — {'ok': True, 'report': '📊 <b>Добовий звіт банку крові</b>\nДата: 2026-05-10\n📦 Записів складу: 3\n📋 Активні вимоги: 1\n✅ Видано сьогодні: 0\n♻️ Списано сьогодні: 1\n🔴 Несумісності сьогодні: 1\n🌡️ Температурні тривоги: 1', 'sent': 0}
+[OK] 66 Daily reports list — [{'created_at': '2026-05-10 12:12:43', 'id': 1, 'report_text': '📊 <b>Добовий звіт банку крові</b>\nДата: 2026-05-10\n📦 Записів складу: 3\n📋 Активні вимоги: 1\n✅ Видано сьогодні: 0\n♻️ Списано сьогодні: 1\n🔴 Несумісності сьогодні: 1\n🌡️ Температурні тривоги: 1', 'report_type': 'daily', 'sent_telegram': 0}]
+[OK] 67 Traceability search — [{'action_type': 'writeoff', 'created_at': '2026-05-10 12:12:43', 'department': '', 'id': 3, 'notes': 'Прострочено', 'package_code': 'QR_CRYO', 'patient_name': '', 'request_id': None, 'user_name': 'Sepsis'}, {'action_type': 'issue_check_ok', 'created_at': '2026-05-10 12:12:43', 'department': 'Хірургія', 'id': 2, 'notes': 'compatible', 'package_code': 'QR_OK', 'patient_name': 'Пацієнт V59', 'request_id': 1, 'user_name': 'Sepsis'}]
+[FAIL] 68 Security login-attempt save — {'error': 'CSRF token invalid', 'ok': False}
+[OK] 69 Security login-attempts list — [{'created_at': '2026-05-10 12:12:43', 'id': 2, 'ip': '127.0.0.1', 'ok': 1, 'user_agent': None, 'username': 'Sepsis'}]
+[OK] 70 Request PDF — 200; 25551
+[OK] 71 XLSX export — 200; 5021
+[OK] 72 PDF export — 200; 23809
+[OK] 73 Backup create — {'filename': 'blood_bank_backup_20260510_121243.db.zip', 'ok': True}
+[OK] 74 Audit CSV — 200; 1291
+[OK] 75 External API no token blocked — {'error': 'API token invalid', 'ok': False}
+[OK] 76 External API token accepted — {'ok': True, 'postgres': False, 'time': '2026-05-10 12:12:43', 'version': 'V5.5'}
+[OK] 77 Gunicorn startup — 
+
+Підсумок: 76/77 тестів успішно.
+
+Виявлені проблеми:
+- 68 Security login-attempt save: {'error': 'CSRF token invalid', 'ok': False}

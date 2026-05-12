@@ -1,0 +1,102 @@
+BLOOD BANK V6.0.3 FINAL FULL BACKEND + FRONTEND + FUNCTIONAL AUDIT REPORT
+==============================================================================================================
+
+[OK] 01 Python compile — 
+[OK] 02 shared.js syntax — OK
+[OK] 03 service-worker syntax — OK
+[OK] 04 version labels — 
+[OK] 05 GET /login fix — 
+[OK] 06 no secondary UI remnants — 
+[OK] 07 openRoleFeature fallback — 
+[OK] 08 mobile/table CSS — 
+[OK] 09 permissions — 
+[OK] 10 PWA v6.0.3 — 
+[OK] 11 GET / — 200; <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"></head><body class="login-body">
+[OK] 11 GET /login — 200; <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"></head><body class="login-body">
+[OK] 11 GET /api/version — 200; {"ok":true,"title":"\u0411\u0430\u043d\u043a \u043a\u0440\u043e\u0432\u0456 V6.0.3","version":"V6.0.3"}
+
+[OK] 11 GET /api/health — 200; {"admin_count":1,"auto_backup_enabled":false,"backup_age_hours":null,"database":"ok","database_error":"","ok":true,"postgres":false,"telegram_configured":false,"time":"2026-05-10 17:07:47","version":"V6.0.3"}
+
+[OK] 11 GET /api/health-debug — 200; {"admins":1,"db_select":{"ok":1},"migrations":[],"ok":true,"version":"V6.0.3"}
+
+[OK] 11 GET /api/tx-reset — 200; {"message":"transaction rolled back","ok":true,"version":"V6.0.3"}
+
+[OK] 11 GET /static/style.css — 200; :root{--red:#b91c1c;--blue:#2563eb;--green:#16a34a;--yellow:#ffd84d;--dark:#111827;--bg:#f6f7fb;--border:#e5e7eb}*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:#111827}.header{background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:white;padding:
+[OK] 11 GET /manifest.json — 200; {
+  "name": "Банк крові V6.0.3",
+  "short_name": "BloodBank V6",
+  "start_url": "/?v=6.0.3",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#b91c1c",
+  "icons": [
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+[OK] 11 GET /service-worker.js — 200; const CACHE='blood-bank-v6-0-3-cache';
+const ASSETS=['/','/static/style.css','/static/shared.js','/manifest.json','/api/dashboard'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()))});
+self.addEventListener('activate',e=>{e.wa
+[OK] 12 /api/version V6.0.3 — {'ok': True, 'title': 'Банк крові V6.0.3', 'version': 'V6.0.3'}
+[FAIL] 13 wrong login rejected — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"></head><body class="login-body">
+[OK] 14 first admin login — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"></head><body class="login-body"><div class="login-card"><h1>Зміна пароля</h
+[OK] 15 password change csrf — 31ebf819
+[FAIL] 16 logout — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"></head><body class="login-body">
+[OK] 17 relogin admin — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content
+[OK] 18 CSRF blocks unsafe POST — {'error': 'CSRF token invalid', 'ok': False}
+[OK] 19 create users — [('doc', 200, {'ok': True}), ('nurse', 200, {'ok': True}), ('trans', 200, {'ok': True})]
+[OK] 20 login doctor — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"></head><body class="login-body"><div class="login-card"><h1>Зміна пароля</h
+[OK] 21 permissions doctor — {'ok': True, 'permissions': {'can_backup': False, 'can_delete_all': False, 'can_edit_all': False, 'can_manage_users': False, 'can_view_audit': False, 'label': 'Лікар', 'sections': ['dashboard', 'requests', 'patients', 'history', 'telegram', 'pwa']}, 'role': 'doctor'}
+[OK] 20 login nurse — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"></head><body class="login-body"><div class="login-card"><h1>Зміна пароля</h
+[OK] 21 permissions nurse — {'ok': True, 'permissions': {'can_backup': False, 'can_delete_all': False, 'can_edit_all': False, 'can_manage_users': False, 'can_view_audit': False, 'label': 'Медсестра', 'sections': ['dashboard', 'requests', 'stock', 'barcode', 'traceability', 'temperature', 'telegram', 'pwa']}, 'role': 'nurse'}
+[OK] 20 login transfusion — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"></head><body class="login-body"><div class="login-card"><h1>Зміна пароля</h
+[OK] 21 permissions transfusion — {'ok': True, 'permissions': {'can_backup': True, 'can_delete_all': True, 'can_edit_all': True, 'can_manage_users': True, 'can_view_audit': True, 'label': 'Трансфузіолог', 'sections': ['dashboard', 'stock', 'requests', 'reports', 'users', 'telegram', 'pwa', 'monitor', 'audit', 'maintenance', 'barcode', 'traceability', 'incompat', 'dashboardPro', 'temperature', 'writeoff', 'dailyReport']}, 'role': 'transfusion'}
+[OK] 22 stock add OK — {'ok': True}
+[OK] 22 stock add BAD — {'ok': True}
+[OK] 22 stock add CRYO — {'ok': True}
+[OK] 23 stock list — 3
+[OK] 24 request create — {'ok': True}
+[OK] 25 requests list — [{'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 17:07:48', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': '', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт V603', 'patient_rh': 'Rh+', 'patient_status': '', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Планово', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}]
+[OK] 26 barcode scan — {'code': 'QR_OK', 'ok': True, 'package': {'amount': 2.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 17:07:48', 'donor_group': 'O(I)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 1, 'note': '', 'pack_no': 'PACKOK', 'patient_name': '', 'qr_code': 'QR_OK', 'series': '', 'type': 'Надходження', 'user_id': 1}}
+[OK] 27 barcode compatible — {'compatible': True, 'ok': True, 'package': {'amount': 2.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 17:07:48', 'donor_group': 'O(I)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 1, 'note': '', 'pack_no': 'PACKOK', 'patient_name': '', 'qr_code': 'QR_OK', 'series': '', 'type': 'Надходження', 'user_id': 1}, 'reason': 'Сумісно', 'request': {'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 17:07:48', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': '', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт V603', 'patient_rh': 'Rh+', 'patient_status': '', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Планово', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}}
+[OK] 28 barcode incompatible — {'compatible': False, 'ok': False, 'package': {'amount': 2.0, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 17:07:48', 'donor_group': 'B(III)', 'donor_rh': 'Rh+', 'expiry': '2030-01-01', 'id': 2, 'note': '', 'pack_no': 'PACKBAD', 'patient_name': '', 'qr_code': 'QR_BAD', 'series': '', 'type': 'Надходження', 'user_id': 1}, 'reason': 'ABO несумісність', 'red_alert': True, 'request': {'address': '', 'amount': 1.0, 'approved_by': None, 'birth_date': '1980-01-01', 'compatibility_ok': 1, 'compatibility_warning': None, 'component': 'Еритроцитарні компоненти', 'created_at': '2026-05-10 17:07:48', 'created_by': 1, 'department': 'Хірургія', 'diagnosis': 'Діагноз', 'doctor_name': 'Адміністратор', 'doctor_position': 'Завідувач', 'donor_group': None, 'donor_rh': None, 'expiry': None, 'id': 1, 'issued_at': None, 'issued_by': None, 'note': '', 'pack_no': None, 'patient_group': 'O(I)', 'patient_name': 'Пацієнт V603', 'patient_rh': 'Rh+', 'patient_status': '', 'reaction_description': None, 'reaction_present': 'Ні', 'reaction_result': None, 'reaction_severity': None, 'reaction_type': None, 'series': None, 'status': 'Нова', 'urgency': 'Планово', 'use_confirm': None, 'used_at': None, 'used_by': None, 'writeoff_at': None, 'writeoff_reason': None, 'written_by': None}}
+[OK] 29 dashboard pro — 200; {"active_requests":1,"incompat_today":1,"issued_today":0,"stock_items":3,"temperature_alerts_today":0,"used_today":0,"writeoffs_today":0}
+; bytes=138
+[OK] 30 incompatibility — 200; [{"component":"\u0415\u0440\u0438\u0442\u0440\u043e\u0446\u0438\u0442\u0430\u0440\u043d\u0456 \u043a\u043e\u043c\u043f\u043e\u043d\u0435\u043d\u0442\u0438","created_at":"2026-05-10 17:07:48","donor_group":"B(III)","donor_rh":"Rh+","id":1,"ip_address":"127.0.0.1","issued_by":"Sepsis","notes":"barcode; bytes=575
+[OK] 31 traceability — 200; [{"action_type":"issue_check_ok","created_at":"2026-05-10 17:07:48","department":"\u0425\u0456\u0440\u0443\u0440\u0433\u0456\u044f","id":2,"notes":"compatible","package_code":"QR_OK","patient_name":"\u041f\u0430\u0446\u0456\u0454\u043d\u0442 V603","request_id":1,"user_name":"Sepsis"},{"action_type":; bytes=470
+[OK] 32 temperature normal — 200; {"alert":false,"ok":true}
+; bytes=26
+[OK] 33 temperature alert — 200; {"alert":true,"ok":true}
+; bytes=25
+[OK] 34 writeoff — 200; {"ok":true}
+; bytes=12
+[OK] 35 telegram me — 200; {"bot_username":"test_bot","link_url":"https://t.me/test_bot?start=link_1_Sepsis","ok":true,"settings":{"backups":0,"critical":0,"expiring":0,"new_requests":0,"reactions":0},"telegram_chat_id":"","telegram_enabled":false,"telegram_username":""}
+; bytes=245
+[OK] 36 telegram daily report — 200; {"ok":true,"report":"\ud83d\udcca <b>\u0414\u043e\u0431\u043e\u0432\u0438\u0439 \u0437\u0432\u0456\u0442 \u0431\u0430\u043d\u043a\u0443 \u043a\u0440\u043e\u0432\u0456</b>\n\u0414\u0430\u0442\u0430: 2026-05-10\n\ud83d\udce6 \u0417\u0430\u043f\u0438\u0441\u0456\u0432 \u0441\u043a\u043b\u0430\u0434\u04; bytes=898
+[OK] 37 backup create — 200; {"filename":"blood_bank_backup_20260510_170748.db.zip","ok":true}
+; bytes=66
+[OK] 38 report xlsx — 200; <binary 5023 bytes>; bytes=5023
+[OK] 39 report pdf — 200; <binary 23808 bytes>; bytes=23808
+[OK] 40 request pdf — 200; <binary 25551 bytes>; bytes=25551
+[OK] 41 audit csv — 200; ﻿created_at,username,role,action,details,ip,user_agent
+"2026-05-10 17:07:48","Sepsis","admin","backup_create","blood_bank_backup_20260510_170748.db.zip","127.0.0.1","Werkzeug/3.1.8"
+"2026-05-10 17:07:48","Sepsis","admin","component_writeoff","QR_CRYO: Тест","127.0.0.1","Werkzeug/3.1.8"
+"2026-05-10 1; bytes=1805
+[OK] 42 audit xlsx — 200; <binary 5722 bytes>; bytes=5722
+[OK] 43 telegram webhook start — {'ok': True, 'result': 'linked'}
+[OK] 44 telegram cmd /stock — {'ok': True, 'result': 'stock'}
+[OK] 44 telegram cmd /critical — {'ok': True, 'result': 'critical'}
+[OK] 44 telegram cmd /requests — {'ok': True, 'result': 'requests'}
+[OK] 44 telegram cmd /expiring — {'ok': True, 'result': 'expiring'}
+[FAIL] 48 final logout — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"></head><body class="login-body">
+[OK] 49 final relogin — <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content
+[OK] 50 gunicorn startup — 
+
+Підсумок: 61/64 тестів успішно.
+
+Issues:
+- 13 wrong login rejected: <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"></head><body class="login-body">
+- 16 logout: <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"></head><body class="login-body">
+- 48 final logout: <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Банк крові V6.0.3</title><link rel="stylesheet" href="/static/style.css"><link rel="manifest" href="/manifest.json"></head><body class="login-body">
