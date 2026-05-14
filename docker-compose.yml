@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: bloodbank
+      POSTGRES_USER: bloodbank
+      POSTGRES_PASSWORD: bloodbank_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: change_me
+      COOKIE_SECURE: "0"
+      REQUIRE_HTTPS: "0"
+      DEBUG: "0"
+      SESSION_TIMEOUT_MINUTES: "30"
+      DATABASE_URL: postgresql://bloodbank:bloodbank_password@db:5432/bloodbank
+      API_TOKEN: change_api_token
+    depends_on:
+      - db
+volumes:
+  pgdata:
