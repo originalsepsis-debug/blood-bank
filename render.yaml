@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: blood-bank-v7
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --threads 4 --timeout 120
+    healthCheckPath: /api/public-health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: API_TOKEN
+        generateValue: true
+      - key: POSTGRES_ONLY
+        value: "1"
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: REQUIRE_HTTPS
+        value: "1"
+      - key: SESSION_TIMEOUT_MINUTES
+        value: "60"
+      - key: MAX_CONTENT_LENGTH
+        value: "52428800"
+
